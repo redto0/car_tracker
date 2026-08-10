@@ -1,0 +1,41 @@
+# Runtime ROS parameters for the MentorPi depth camera nodes.
+#
+# Launch-time wiring (topic names, driver executable) is in camera_wiring.yaml,
+# not here -- remaps are resolved before nodes exist and can never be params.
+#
+# Node names must match the `name=` given in camera.launch.py, or these are
+# silently ignored. The /**: wildcard applies to every node.
+
+/**:
+  ros__parameters:
+    use_sim_time: false
+
+# Vendor Angstrong driver.
+#
+# UNVERIFIED. These are the shape of the block, not confirmed vendor API. Dump
+# the real ones with `ros2 param dump /ascamera` and replace wholesale.
+ascamera:
+  ros__parameters:
+    # Must agree with the URDF or the projection into the map frame is silently
+    # wrong -- and a wrong extrinsic looks exactly like a SLAM tuning problem.
+    color_frame_id: camera_color_optical_frame
+    depth_frame_id: camera_depth_optical_frame
+
+camera_resize:
+  ros__parameters:
+    # use_scale must be false for width/height to take effect; when true the
+    # node uses scale_width/scale_height and ignores width/height entirely.
+    use_scale: false
+    width: 640
+    height: 360
+    # 0=NEAREST 1=LINEAR 2=CUBIC 3=AREA 4=LANCZOS4.
+    # AREA is better for large downscales, LINEAR is cheaper on the Pi. Revisit
+    # if the segmentation model turns out to be sensitive to aliasing.
+    interpolation: 1
+
+camera_republish:
+  ros__parameters:
+    # JPEG quality for the Pi->desktop wire stream. 60-70 is plenty for terrain
+    # texture; raise it if the classifier starts seeing block artifacts.
+    format: jpeg
+    jpeg_quality: 65

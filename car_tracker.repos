@@ -1,0 +1,42 @@
+# car-tracker source dependencies -- MentorPi M1 (mecanum, Pi 5, ROS 2 Humble)
+#
+#   vcs import src < src/car_tracker/car_tracker.repos
+#   rosdep install --from-paths src --ignore-src -r -y
+#   colcon build --symlink-install
+#
+# Source-only. Anything available as ros-humble-* comes from apt via rosdep --
+# notably slam_toolbox, navigation2 and nav2_bringup. Do not add slam_toolbox
+# here: upstream's `ros2` branch is 2.10.0 and targets Jazzy, Humble ships 2.6.10.
+
+repositories:
+
+  # Dual-EKF localization. Upstream branches are all "-devel" suffixed; there is
+  # no plain "humble" branch. Also on apt if you ever want to drop the source build.
+  robot_localization:
+    type: git
+    url: https://github.com/cra-ros-pkg/robot_localization.git
+    version: humble-devel
+
+  # ISC drive-mode arbitration: drive_mode_switch, inital_point_publisher.
+  robot_state_controller:
+    type: git
+    url: git@github.com:iscumd/robot_state_controller.git
+    version: ros2
+
+  # Camera -> ground-plane projection (ray/plane intersection via image_geometry).
+  camera_to_ground_projection:
+    type: git
+    url: git@github.com:redto0/camera_to_ground_projection.git
+    version: master
+
+  # Nav2 costmap layer for semantic segmentation. Upstream's "humble" branch is
+  # mislabeled Jazzy-era code and does not build on Humble, so we carry a fork.
+  # TODO: move to version "humble" once fix/humble-compat is merged in the fork.
+  semantic_segmentation_layer:
+    type: git
+    url: git@github.com:redto0/semantic_segmentation_layer.git
+    version: fix/humble-compat
+
+# Dropped Phoenix go-kart leftovers: ackermann_msgs, twist_to_ackermann,
+# teleop_ack_joy (M1 is holonomic), depthai-ros (OAK-D, wrong camera), phnx_msgs.
+# logi_g29 is kept out of .repos but left in src/ deliberately.
