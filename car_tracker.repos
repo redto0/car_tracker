@@ -17,6 +17,14 @@ repositories:
     url: https://github.com/cra-ros-pkg/robot_localization.git
     version: humble-devel
 
+  # Mission manager. car_tracker's package.xml exec_depends on this, so a fresh
+  # workspace needs it or robot.launch.py cannot start the mission node.
+  # TODO: move to "master" once feat/mission-manager is merged.
+  car_tracker_path_resolver:
+    type: git
+    url: git@github.com:redto0/car_tracker_path_resolver.git
+    version: feat/mission-manager
+
   # ISC drive-mode arbitration: drive_mode_switch, inital_point_publisher.
   robot_state_controller:
     type: git
