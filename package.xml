@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+    <name>car_tracker</name>
+    <version>0.1.0</version>
+    <description>
+        Top-level bringup for the car-tracker stack on a MentorPi M1. Holds the launch tree
+        and shared configuration; contains no nodes of its own. robot.launch.py brings up the
+        Pi, compute.launch.py brings up the desktop.
+    </description>
+    <maintainer email="aboccacc@umich.edu">redto0</maintainer>
+    <license>MIT</license>
+
+    <buildtool_depend>ament_cmake</buildtool_depend>
+
+    <!--Launch-only package: everything below is needed at runtime, not to build.-->
+    <exec_depend>launch</exec_depend>
+    <exec_depend>launch_ros</exec_depend>
+
+    <!--Camera pipeline-->
+    <exec_depend>image_proc</exec_depend>
+    <exec_depend>image_transport</exec_depend>
+    <exec_depend>image_transport_plugins</exec_depend>
+
+    <!--Our nodes-->
+    <exec_depend>car_tracker_path_resolver</exec_depend>
+
+    <!--Localization, SLAM and nav, all from apt-->
+    <exec_depend>robot_localization</exec_depend>
+    <exec_depend>robot_state_publisher</exec_depend>
+    <exec_depend>slam_toolbox</exec_depend>
+    <exec_depend>nav2_bringup</exec_depend>
+
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_cmake_xmllint</test_depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
+</package>

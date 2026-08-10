@@ -1,0 +1,53 @@
+# Launch-time wiring for the MentorPi base and lidar.
+#
+# Read by the include/ launch files with yaml.safe_load while the launch
+# description is being built. These CANNOT be ROS parameters -- remaps, package
+# names and launch-file paths are all resolved before any node exists.
+#
+# EVERYTHING IN THIS FILE IS UNVERIFIED against the robot. The names come from a
+# community MentorPi starter pack, not from Hiwonder's docs. Confirm with:
+#   ros2 pkg list | grep -iE "controller|ldlidar|ascamera|description"
+#   ros2 topic list -t
+# and fix here rather than in the launch files.
+
+# Vendor base driver: motors, wheel encoders, IMU. Shipped as a launch file
+# rather than a bare node, so it is included, not spawned.
+base:
+  package: controller
+  launch_file: controller.launch.py
+
+# Vendor lidar driver (STL-19P, an LDRobot LD19/D500).
+lidar:
+  package: ldlidar_node
+  launch_file: ldlidar.launch.py
+
+# Robot description. MentorPi ships its own URDF; point this at it rather than
+# writing a second one that will drift out of sync.
+description:
+  package: controller
+  launch_file: robot_description.launch.py
+
+# vendor topic -> normalized name
+#
+# The lidar publishes under its node namespace, but slam_toolbox, Nav2 and
+# rviz all conventionally expect /scan. Normalizing here means nothing
+# downstream needs to know the vendor topic exists.
+remaps:
+  ldlidar_node/scan: scan
+  # The base driver already publishes /odom and subscribes /cmd_vel, which are
+  # conventional. Listed as identity mappings anyway so the full topic surface
+  # of the base is visible in one place.
+  odom: odom
+  cmd_vel: cmd_vel
+  # IMU topic name is a guess. Hiwonder stacks vary between /imu/data,
+  # /ros_robot_controller/imu_raw and /imu.
+  imu/data: imu/data
+
+# Frame names. Must match the URDF -- a mismatch here silently breaks TF and
+# looks exactly like a SLAM tuning problem.
+frames:
+  # MentorPi may use base_footprint instead. Check `ros2 run tf2_tools view_frames`.
+  base: base_link
+  odom: odom
+  map: map
+  lidar: laser_frame

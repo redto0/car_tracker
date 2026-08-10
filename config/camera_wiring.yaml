@@ -1,0 +1,35 @@
+# Launch-time wiring for the MentorPi depth camera.
+#
+# Read by camera.launch.py via yaml.safe_load when the launch description is
+# built. These CANNOT be ROS parameters: remaps and executable names are
+# resolved before any node exists. Runtime tunables live in camera_params.yaml.
+
+driver:
+  # UNVERIFIED against the robot.
+  #   ros2 pkg executables | grep -i ascamera
+  package: ascamera
+  executable: ascamera_node
+
+# vendor topic  ->  normalized name
+#
+# rgb0 names come from the MentorPi starter pack. The depth0 names are INFERRED
+# by symmetry -- confirm before trusting them:
+#   ros2 topic list -t | grep -i ascamera
+#
+# Note the vendor publishes .../image_compressed instead of the conventional
+# .../image_raw/compressed. That breaks image_transport's compressed-topic
+# discovery; this remap is what makes it work downstream.
+remaps:
+  ascamera/camera_publisher/rgb0/image: camera/color/image_raw
+  ascamera/camera_publisher/rgb0/image_compressed: camera/color/image_raw/compressed
+  ascamera/camera_publisher/rgb0/camera_info: camera/color/camera_info
+  ascamera/camera_publisher/depth0/image_raw: camera/depth/image_rect_raw
+  ascamera/camera_publisher/depth0/camera_info: camera/depth/camera_info
+
+# Internal pipeline stage names. Kept here so the whole topic graph is described
+# in one place rather than split between this file and the launch file.
+pipeline:
+  color_image: camera/color/image_raw
+  color_info: camera/color/camera_info
+  downscaled_image: camera/color/downscaled/image_raw
+  downscaled_info: camera/color/downscaled/camera_info

@@ -1,0 +1,113 @@
+# robot_localization, dual-EKF setup. See car_tracker_design/architecture.md.
+#
+# ekf_odom  (world_frame: odom) publishes odom -> base_link.  Always run this.
+# ekf_map   (world_frame: map)  publishes map  -> base_link.  OPTIONAL.
+#
+# THE LANDMINE: slam_toolbox publishes map -> odom itself. Running ekf_map as
+# well gives two broadcasters on one transform. TF does not error -- it
+# interleaves them and the robot appears to vibrate through walls.
+#
+# Start with ekf_odom only and let slam_toolbox own map -> odom. Only enable
+# ekf_map after setting slam_toolbox's transform_publish_period to 0.0, and only
+# once there is a second absolute source (GPS, AprilTags) to justify it. With
+# lidar alone it is added latency and tuning for near-zero gain.
+
+ekf_odom:
+  ros__parameters:
+    use_sim_time: false
+    frequency: 30.0
+    sensor_timeout: 0.1
+    # Non-negotiable for a ground robot: locks Z, roll and pitch so noise on
+    # those axes cannot leak into the planar estimate.
+    two_d_mode: true
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    # world_frame == odom_frame is what makes this the LOCAL filter: continuous,
+    # no jumps, safe for the controller to differentiate.
+    world_frame: odom
+
+    # Wheel odometry. Mecanum, so vy is observable -- but the rollers slip
+    # laterally far more than they do longitudinally, so vy deserves a much
+    # larger covariance than vx. robot_localization takes that from the message,
+    # not from here: if the vendor driver publishes zeros or an identity block,
+    # add a republisher that injects sane values, or the filter will either
+    # trust it infinitely or produce NaNs.
+    odom0: odom
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,
+                   false, false, false,
+                   false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 10
+
+    # IMU: yaw RATE only.
+    #
+    # Not absolute yaw -- no magnetometer indoors, motors and rebar wreck it.
+    # Not linear acceleration -- a 1 degree attitude error leaks
+    # g*sin(1deg) = 0.17 m/s^2 into the horizontal axes, which is a third of
+    # this robot's real acceleration and integrates without bound. Translational
+    # drift is corrected by lidar SLAM, not by the IMU.
+    #
+    # Check first whether the vendor /odom ALREADY fuses the IMU. Several
+    # Hiwonder stacks do, and fusing it twice makes the filter overconfident:
+    # it drifts smoothly while reporting tight covariance, which is the worst
+    # failure mode because it looks healthy.
+    imu0: imu/data
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
+
+ekf_map:
+  ros__parameters:
+    use_sim_time: false
+    frequency: 30.0
+    sensor_timeout: 0.1
+    two_d_mode: true
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    # world_frame == map_frame makes this the GLOBAL filter. Its output jumps on
+    # loop closure, which is correct but means the controller must never
+    # differentiate it for velocity.
+    world_frame: map
+
+    odom0: odom
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,
+                   false, false, false,
+                   false, false, false]
+    odom0_differential: false
+
+    imu0: imu/data
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_remove_gravitational_acceleration: true
+
+    # Absolute pose from slam_toolbox. Requires transform_publish_period: 0.0 in
+    # slam_toolbox.yaml, or this fights slam_toolbox for map -> odom.
+    pose0: slam_pose
+    pose0_config: [true,  true,  false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    pose0_differential: false
+    pose0_relative: false
+    pose0_queue_size: 10
