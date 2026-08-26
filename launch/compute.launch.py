@@ -1,4 +1,4 @@
-"""Desktop bringup. See docs/compute.launch.md."""
+"""Desktop bringup. See car_tracker_design/deployment/compute.launch.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription

@@ -1,4 +1,4 @@
-"""MentorPi base driver. See docs/controller.launch.md."""
+"""MentorPi base driver. See car_tracker_design/deployment/controller.launch.md."""
 
 import os
 

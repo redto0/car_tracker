@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""MentorPi depth camera bringup. See docs/camera.launch.md."""
+"""MentorPi depth camera bringup. See car_tracker_design/deployment/camera.launch.md."""
 
 import os
 
