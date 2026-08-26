@@ -1,4 +1,4 @@
-"""robot_localization EKFs. See car_tracker_design/deployment/ekf.launch.md."""
+"""robot_localization EKFs. See car_tracker_design/nodes/ekf.md."""
 
 import os
 

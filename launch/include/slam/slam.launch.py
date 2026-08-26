@@ -1,4 +1,4 @@
-"""slam_toolbox, online async. See car_tracker_design/deployment/slam.launch.md."""
+"""slam_toolbox, online async. See car_tracker_design/nodes/slam.md."""
 
 import os
 

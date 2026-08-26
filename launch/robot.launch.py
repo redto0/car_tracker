@@ -1,4 +1,4 @@
-"""Full robot bringup, runs on the Pi. See car_tracker_design/deployment/robot.launch.md."""
+"""Full robot bringup, runs on the Pi. See car_tracker_design/launch/robot.launch.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription

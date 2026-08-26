@@ -1,4 +1,4 @@
-"""Mission manager. See car_tracker_design/deployment/mission.launch.md."""
+"""Mission manager. See car_tracker_design/nodes/path_resolver.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription

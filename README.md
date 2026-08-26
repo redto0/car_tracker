@@ -9,17 +9,17 @@ Each is independently launchable, so the build order can be walked one subsystem
 
 | File | Runs on | Doc |
 |---|---|---|
-| `robot.launch.py` | Pi | [robot](https://github.com/redto0/car_tracker_design/blob/main/deployment/robot.launch.md) |
-| `compute.launch.py` | desktop | [compute](https://github.com/redto0/car_tracker_design/blob/main/deployment/compute.launch.md) |
-| `include/base/controller.launch.py` | Pi | [controller](https://github.com/redto0/car_tracker_design/blob/main/deployment/controller.launch.md) |
-| `include/base/description.launch.py` | Pi | [description](https://github.com/redto0/car_tracker_design/blob/main/deployment/description.launch.md) |
-| `include/sensors/camera.launch.py` | Pi | [camera](https://github.com/redto0/car_tracker_design/blob/main/deployment/camera.launch.md) |
-| `include/sensors/lidar.launch.py` | Pi | [lidar](https://github.com/redto0/car_tracker_design/blob/main/deployment/lidar.launch.md) |
-| `include/localization/ekf.launch.py` | Pi | [ekf](https://github.com/redto0/car_tracker_design/blob/main/deployment/ekf.launch.md) |
-| `include/slam/slam.launch.py` | Pi | [slam](https://github.com/redto0/car_tracker_design/blob/main/deployment/slam.launch.md) |
-| `include/navigation/nav2.launch.py` | Pi | [nav2](https://github.com/redto0/car_tracker_design/blob/main/deployment/nav2.launch.md) |
-| `include/navigation/mission.launch.py` | Pi | [mission](https://github.com/redto0/car_tracker_design/blob/main/deployment/mission.launch.md) |
-| `include/rviz/rviz.launch.py` | desktop | [rviz](https://github.com/redto0/car_tracker_design/blob/main/deployment/rviz.launch.md) |
+| `robot.launch.py` | Pi | [robot](https://github.com/redto0/car_tracker_design/blob/main/launch/robot.launch.md) |
+| `compute.launch.py` | desktop | [compute](https://github.com/redto0/car_tracker_design/blob/main/launch/compute.launch.md) |
+| `include/base/controller.launch.py` | Pi | [controller](https://github.com/redto0/car_tracker_design/blob/main/nodes/controller.md) |
+| `include/base/description.launch.py` | Pi | [description](https://github.com/redto0/car_tracker_design/blob/main/nodes/description.md) |
+| `include/sensors/camera.launch.py` | Pi | [camera](https://github.com/redto0/car_tracker_design/blob/main/nodes/camera.md) |
+| `include/sensors/lidar.launch.py` | Pi | [lidar](https://github.com/redto0/car_tracker_design/blob/main/nodes/lidar.md) |
+| `include/localization/ekf.launch.py` | Pi | [ekf](https://github.com/redto0/car_tracker_design/blob/main/nodes/ekf.md) |
+| `include/slam/slam.launch.py` | Pi | [slam](https://github.com/redto0/car_tracker_design/blob/main/nodes/slam.md) |
+| `include/navigation/nav2.launch.py` | Pi | [nav2](https://github.com/redto0/car_tracker_design/blob/main/nodes/nav2.md) |
+| `include/navigation/mission.launch.py` | Pi | [path_resolver](https://github.com/redto0/car_tracker_design/blob/main/nodes/path_resolver.md) |
+| `include/rviz/rviz.launch.py` | desktop | [rviz](https://github.com/redto0/car_tracker_design/blob/main/nodes/rviz.md) |
 
 ## Config
 
@@ -76,7 +76,7 @@ sudo apt install ros-humble-imu-complementary-filter ros-humble-laser-filters ro
 The MentorPi driver layer comes from
 [MentorPiDrivers](https://github.com/redto0/MentorPiDrivers), a stripped fork of
 Hiwonder's monorepo — see
-[deployment/dependencies.md](https://github.com/redto0/car_tracker_design/blob/main/deployment/dependencies.md).
+[dependencies.md](https://github.com/redto0/car_tracker_design/blob/main/dependencies.md).
 
 Architecture and conventions live in
 [car_tracker_design](https://github.com/redto0/car_tracker_design).
