@@ -1,53 +1,69 @@
-# Launch-time wiring for the MentorPi base and lidar.
+# Launch-time wiring for the MentorPi base, lidar and description.
 #
 # Read by the include/ launch files with yaml.safe_load while the launch
 # description is being built. These CANNOT be ROS parameters -- remaps, package
 # names and launch-file paths are all resolved before any node exists.
 #
-# EVERYTHING IN THIS FILE IS UNVERIFIED against the robot. The names come from a
-# community MentorPi starter pack, not from Hiwonder's docs. Confirm with:
-#   ros2 pkg list | grep -iE "controller|ldlidar|ascamera|description"
-#   ros2 topic list -t
-# and fix here rather than in the launch files.
+# VERIFIED against Hiwonder's official stack: github.com/Hiwonder/MentorPi
+# (cloned at the workspace root). Frame and topic names below are read from
+# their launch files and config, not guessed.
 
-# Vendor base driver: motors, wheel encoders, IMU. Shipped as a launch file
-# rather than a bare node, so it is included, not spawned.
+# Vendor base driver: motors, wheel encoders, IMU, and -- importantly -- their
+# own robot_localization EKF. See enable_odom below.
 base:
   package: controller
   launch_file: controller.launch.py
 
-# Vendor lidar driver (STL-19P, an LDRobot LD19/D500).
+# Vendor lidar wrapper. Dispatches on the LIDAR_TYPE env var to the real driver
+# (ldlidar_stl_ros2 for LD19, oradar_lidar for MS200). Already publishes /scan.
 lidar:
-  package: ldlidar_node
-  launch_file: ldlidar.launch.py
+  package: peripherals
+  launch_file: lidar.launch.py
 
-# Robot description. MentorPi ships its own URDF; point this at it rather than
-# writing a second one that will drift out of sync.
+# robot_state_publisher + the mecanum xacro.
 description:
-  package: controller
+  package: mentorpi_description
   launch_file: robot_description.launch.py
 
-# vendor topic -> normalized name
+# Environment variables the vendor launch files read with os.environ[...] --
+# a plain dict lookup, so an unset variable is a KeyError that aborts the whole
+# launch. Our launch files set these via SetEnvironmentVariable so they cannot
+# be forgotten.
 #
-# The lidar publishes under its node namespace, but slam_toolbox, Nav2 and
-# rviz all conventionally expect /scan. Normalizing here means nothing
-# downstream needs to know the vendor topic exists.
-remaps:
-  ldlidar_node/scan: scan
-  # The base driver already publishes /odom and subscribes /cmd_vel, which are
-  # conventional. Listed as identity mappings anyway so the full topic surface
-  # of the base is visible in one place.
-  odom: odom
-  cmd_vel: cmd_vel
-  # IMU topic name is a guess. Hiwonder stacks vary between /imu/data,
-  # /ros_robot_controller/imu_raw and /imu.
-  imu/data: imu/data
+#   need_compile        'True' resolves packages from the install share dir,
+#                       'False' hardcodes /home/ubuntu/ros2_ws paths that do not
+#                       exist here. Must be 'True'.
+#   LIDAR_TYPE          MS200 | LD19 | A1 | G4 | LD14P. MentorPi ships the
+#                       STL-19P, which is the LD19 family.
+#   DEPTH_CAMERA_TYPE   'ascamera' for the depth camera version.
+env:
+  need_compile: 'True'
+  LIDAR_TYPE: LD19
+  DEPTH_CAMERA_TYPE: ascamera
 
-# Frame names. Must match the URDF -- a mismatch here silently breaks TF and
-# looks exactly like a SLAM tuning problem.
+# Topic names, verified from Hiwonder's launch files and controller/config/ekf.yaml.
+#
+# THE IMPORTANT ONE: /odom is NOT raw wheel odometry. controller.launch.py runs
+# its own robot_localization ekf_node that fuses odom_raw + odom_rf2o + imu and
+# publishes the result as /odom, along with the odom -> base_footprint TF.
+#
+# So we launch their controller with enable_odom:=false, which disables that EKF,
+# and run ours against odom_raw instead. Otherwise there would be two EKFs and
+# two publishers of odom -> base_footprint, which TF does not reject -- it
+# interleaves them and the robot appears to vibrate through walls.
+topics:
+  odom_raw: odom_raw      # raw wheel odometry, what our ekf_odom consumes
+  odom: odom              # EKF output. Ours publishes here once theirs is off.
+  cmd_vel: cmd_vel
+  # Final filtered IMU. Chain is ros_robot_controller -> imu_calib/apply_calib
+  # -> imu_corrected -> imu_complementary_filter -> imu.
+  imu: imu
+  scan: scan              # peripherals/lidar.launch.py already publishes /scan
+
+# Frames, from controller.launch.py defaults and the mecanum xacro.
 frames:
-  # MentorPi may use base_footprint instead. Check `ros2 run tf2_tools view_frames`.
-  base: base_link
+  base: base_footprint    # NOT base_link -- their whole stack uses base_footprint
   odom: odom
   map: map
-  lidar: laser_frame
+  lidar: lidar_frame
+  imu: imu_link

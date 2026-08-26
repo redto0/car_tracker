@@ -1,13 +1,13 @@
 """
-Robot description: robot_state_publisher, broadcasting base_link -> sensor
-frames from the URDF. Runs on the Pi.
+Robot description: robot_state_publisher broadcasting base_footprint -> sensor
+frames from Hiwonder's mecanum xacro. Runs on the Pi.
 
-Wraps Hiwonder's description launch rather than maintaining a second URDF that
-will drift out of sync with theirs.
+Wraps mentorpi_description rather than maintaining a second URDF that will drift
+out of sync with theirs.
 
 VERIFY THE URDF AGAINST THE PHYSICAL ROBOT before trusting any of it. A 5 cm or
 3 degree lidar extrinsic error smears the map on every turn and is
-indistinguishable from a SLAM tuning problem -- it is one of the most expensive
+indistinguishable from a SLAM tuning problem -- one of the most expensive
 mistakes available on this project.
 
   ros2 launch car_tracker description.launch.py
@@ -19,7 +19,8 @@ import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
+from launch.actions import (DeclareLaunchArgument, GroupAction, IncludeLaunchDescription,
+                            SetEnvironmentVariable)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import PushRosNamespace, SetRemap
@@ -47,6 +48,8 @@ def generate_launch_description():
             description='Namespace to push robot_state_publisher into.'),
     ]
 
+    env = [SetEnvironmentVariable(k, str(v)) for k, v in wiring['env'].items()]
+
     vendor = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([FindPackageShare(desc['package']), 'launch', desc['launch_file']])),
@@ -54,7 +57,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription(
-        args + [
+        args + env + [
             GroupAction([
                 PushRosNamespace(namespace),
                 SetRemap(src='robot_description', dst='robot_description'),

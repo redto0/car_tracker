@@ -1,18 +1,27 @@
 """
 MentorPi base driver: motors, wheel encoders, IMU. Runs on the Pi.
 
-Wraps Hiwonder's own controller launch file rather than replacing it -- the
-serial protocol to the STM32 is the tedious part and theirs works. Everything
-above it is ours.
+Wraps Hiwonder's controller.launch.py rather than replacing it -- the STM32
+serial protocol is the tedious part and theirs works.
 
-Because the vendor ships a launch file rather than a bare node, remaps are
-applied with SetRemap inside the GroupAction. Remaps cannot be passed to an
-IncludeLaunchDescription directly; SetRemap is the scoped equivalent.
+TWO THINGS THIS FILE EXISTS TO GET RIGHT:
+
+1. enable_odom:=false. Their controller.launch.py runs its OWN robot_localization
+   ekf_node, fusing odom_raw + odom_rf2o + imu and publishing /odom plus the
+   odom -> base_footprint transform. Leaving it on alongside our ekf_odom would
+   put two EKFs and two broadcasters on that transform. TF does not reject that;
+   it interleaves them and the robot appears to vibrate through walls. Set
+   enable_odom:=true only if you want their filter INSTEAD of ours, in which
+   case do not launch ekf.launch.py at all.
+
+2. need_compile. Their launch files read os.environ['need_compile'] with a plain
+   dict lookup, so an unset variable is a KeyError that aborts the launch before
+   anything starts. Set here so it cannot be forgotten.
 
   ros2 launch car_tracker controller.launch.py
 
-BEFORE USING THIS: disable Hiwonder's auto-started app stack, or two things
-will publish /cmd_vel and fight over the robot.
+Their raw wheel odometry stays on /odom_raw and the filtered IMU on /imu, which
+is what ekf.launch.py consumes.
 """
 
 import os
@@ -20,7 +29,8 @@ import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
+from launch.actions import (DeclareLaunchArgument, GroupAction, IncludeLaunchDescription,
+                            SetEnvironmentVariable)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import PushRosNamespace, SetRemap
@@ -35,9 +45,12 @@ def generate_launch_description():
         wiring = yaml.safe_load(f)
 
     base = wiring['base']
+    topics = wiring['topics']
+    frames = wiring['frames']
 
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
+    enable_odom = LaunchConfiguration('enable_odom')
 
     args = [
         DeclareLaunchArgument(
@@ -46,21 +59,42 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'namespace', default_value='',
             description='Namespace to push the base driver into.'),
+        DeclareLaunchArgument(
+            'enable_odom', default_value='false',
+            description="Run Hiwonder's own EKF. FALSE here on purpose -- ours "
+                        'owns odom -> base_footprint. Setting this true without '
+                        'also disabling ekf.launch.py gives two broadcasters on '
+                        'that transform.'),
     ]
 
-    # Explicit remaps for the base's whole topic surface, including the identity
-    # ones, so the wiring is readable without opening the vendor launch file.
-    remaps = [SetRemap(src=src, dst=dst) for src, dst in wiring['remaps'].items()
-              if not src.startswith('ldlidar')]
+    # need_compile must be 'True' or their launch files fall back to hardcoded
+    # /home/ubuntu/ros2_ws paths that do not exist here.
+    env = [SetEnvironmentVariable(k, str(v)) for k, v in wiring['env'].items()]
+
+    # The base's whole topic surface, identity mappings included, so the wiring
+    # is readable without opening the vendor launch file.
+    remaps = [
+        SetRemap(src='odom_raw', dst=topics['odom_raw']),
+        SetRemap(src='odom', dst=topics['odom']),
+        SetRemap(src='cmd_vel', dst=topics['cmd_vel']),
+        SetRemap(src='imu', dst=topics['imu']),
+    ]
 
     vendor = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([FindPackageShare(base['package']), 'launch', base['launch_file']])),
-        launch_arguments={'use_sim_time': use_sim_time}.items(),
+        launch_arguments={
+            'use_sim_time': use_sim_time,
+            'enable_odom': enable_odom,
+            'base_frame': frames['base'],
+            'odom_frame': frames['odom'],
+            'map_frame': frames['map'],
+            'imu_frame': frames['imu'],
+        }.items(),
     )
 
     return LaunchDescription(
-        args + [
+        args + env + [
             GroupAction([PushRosNamespace(namespace)] + remaps + [vendor])
         ]
     )

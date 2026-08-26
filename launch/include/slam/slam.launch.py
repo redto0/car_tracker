@@ -42,7 +42,7 @@ def generate_launch_description():
     with open(_WIRING) as f:
         wiring = yaml.safe_load(f)
 
-    scan_topic = wiring['remaps']['ldlidar_node/scan']
+    scan_topic = wiring['topics']['scan']
     frames = wiring['frames']
 
     use_sim_time = LaunchConfiguration('use_sim_time')
