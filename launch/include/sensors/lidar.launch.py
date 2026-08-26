@@ -1,19 +1,4 @@
-"""
-STL-19P lidar. Runs on the Pi.
-
-Wraps Hiwonder's peripherals/lidar.launch.py, which dispatches on the LIDAR_TYPE
-env var to the real driver -- ldlidar_stl_ros2 for the LD19 family (which the
-STL-19P is), oradar_lidar for the MS200. It already publishes /scan, so unlike
-the camera there is no vendor naming to normalize away.
-
-LIDAR_TYPE is set here from robot_wiring.yaml: their launch file reads it with
-os.environ[...], so leaving it unset is a KeyError that aborts the launch.
-
-  ros2 launch car_tracker lidar.launch.py
-
-If the map smears on every turn, suspect the lidar extrinsics in the URDF before
-suspecting SLAM. A 5 cm or 3 degree error looks exactly like a tuning problem.
-"""
+"""STL-19P lidar. See docs/lidar.launch.md."""
 
 import os
 

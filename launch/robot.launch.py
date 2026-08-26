@@ -1,29 +1,4 @@
-"""
-Full robot bringup. Runs on the PI.
-
-Everything safety-critical lives here rather than on the desktop, on one rule:
-if it stopping for 500 ms would crash the robot, it runs on the Pi. WiFi will
-drop. The desktop only ever produces map-frame annotations, never control.
-
-  ros2 launch car_tracker robot.launch.py
-
-Every subsystem has an enable flag, so the build order in
-car_tracker_design/architecture.md can be walked one step at a time:
-
-  # step 3-4: TF and odometry only
-  ros2 launch car_tracker robot.launch.py use_slam:=false use_nav:=false
-  # step 5: add mapping
-  ros2 launch car_tracker robot.launch.py use_nav:=false
-  # step 6: add Nav2, drive from rviz
-  ros2 launch car_tracker robot.launch.py
-
-use_mission defaults to FALSE. With it true the robot starts choosing its own
-goals the moment the stack comes up, which is not what you want while bringing
-things up next to a desk.
-
-BEFORE FIRST USE: disable Hiwonder's auto-started app stack, or two things will
-publish /cmd_vel.
-"""
+"""Full robot bringup, runs on the Pi. See docs/robot.launch.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription

@@ -20,36 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-MentorPi depth camera bringup. Runs on the Pi.
-
-Topic names, the driver executable and the pipeline stage names all live in
-config/camera_wiring.yaml -- this file just wires them together. Runtime
-tunables (resolution, JPEG quality, frame ids) are in config/camera_params.yaml.
-
-Pipeline, at the default empty namespace:
-
-  vendor depth_camera -> /camera/color/image_raw
-                         /camera/color/image_raw/compressed   (vendor JPEG)
-                         /camera/color/camera_info
-                         /camera/depth/image_rect_raw
-                         /camera/depth/camera_info
-        |
-        v  resize_node                       640x480 -> 480x360
-  /camera/color/downscaled/image_raw
-        |
-        v  republish raw -> compressed
-  /camera/color/downscaled/image_raw/compressed    <- the Pi->desktop wire topic
-
-Hiwonder configures ascamera_node at 640x480 @ 15 fps, not the 1920x1080 the
-product page advertises. Raw at that rate is still ~110 Mbit/s, so the JPEG step
-is what matters here; the resize is a secondary saving. 480x360 keeps 4:3 --
-resizing to 640x360 would stretch the image and quietly bias the terrain
-classifier.
-
-  ros2 launch car_tracker camera.launch.py
-  ros2 launch car_tracker camera.launch.py launch_driver:=false   # processing only
-"""
+"""MentorPi depth camera bringup. See docs/camera.launch.md."""
 
 import os
 
