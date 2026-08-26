@@ -1,7 +1,7 @@
 # robot_localization, dual-EKF setup. See car_tracker_design/architecture.md.
 #
-# ekf_odom  (world_frame: odom) publishes odom -> base_link.  Always run this.
-# ekf_map   (world_frame: map)  publishes map  -> base_link.  OPTIONAL.
+# ekf_odom  (world_frame: odom) publishes odom -> base_footprint. Always on.
+# ekf_map   (world_frame: map)  publishes map  -> base_footprint. OPTIONAL.
 #
 # THE LANDMINE: slam_toolbox publishes map -> odom itself. Running ekf_map as
 # well gives two broadcasters on one transform. TF does not error -- it
@@ -24,7 +24,7 @@ ekf_odom:
 
     map_frame: map
     odom_frame: odom
-    base_link_frame: base_link
+    base_link_frame: base_footprint
     # world_frame == odom_frame is what makes this the LOCAL filter: continuous,
     # no jumps, safe for the controller to differentiate.
     world_frame: odom
@@ -35,7 +35,7 @@ ekf_odom:
     # not from here: if the vendor driver publishes zeros or an identity block,
     # add a republisher that injects sane values, or the filter will either
     # trust it infinitely or produce NaNs.
-    odom0: odom
+    odom0: odom_raw
     odom0_config: [false, false, false,
                    false, false, false,
                    true,  true,  false,
@@ -53,11 +53,16 @@ ekf_odom:
     # this robot's real acceleration and integrates without bound. Translational
     # drift is corrected by lidar SLAM, not by the IMU.
     #
-    # Check first whether the vendor /odom ALREADY fuses the IMU. Several
-    # Hiwonder stacks do, and fusing it twice makes the filter overconfident:
-    # it drifts smoothly while reporting tight covariance, which is the worst
-    # failure mode because it looks healthy.
-    imu0: imu/data
+    # CONFIRMED: Hiwonder's controller.launch.py runs its OWN ekf_node that
+    # already fuses odom_raw + odom_rf2o + imu and publishes it as /odom. So we
+    # launch their controller with enable_odom:=false and consume odom_raw here.
+    # Fusing their /odom would double-count the IMU and make this filter
+    # overconfident -- it would drift smoothly while reporting tight
+    # covariance, which is the worst failure mode because it looks healthy.
+    #
+    # For reference their config fuses yaw twice over (odom0 yaw rate, imu0
+    # absolute yaw AND yaw rate), which is exactly what not to do.
+    imu0: imu
     imu0_config: [false, false, false,
                   false, false, false,
                   false, false, false,
@@ -78,13 +83,13 @@ ekf_map:
 
     map_frame: map
     odom_frame: odom
-    base_link_frame: base_link
+    base_link_frame: base_footprint
     # world_frame == map_frame makes this the GLOBAL filter. Its output jumps on
     # loop closure, which is correct but means the controller must never
     # differentiate it for velocity.
     world_frame: map
 
-    odom0: odom
+    odom0: odom_raw
     odom0_config: [false, false, false,
                    false, false, false,
                    true,  true,  false,
@@ -92,7 +97,7 @@ ekf_map:
                    false, false, false]
     odom0_differential: false
 
-    imu0: imu/data
+    imu0: imu
     imu0_config: [false, false, false,
                   false, false, false,
                   false, false, false,
