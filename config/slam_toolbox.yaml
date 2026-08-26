@@ -25,7 +25,7 @@ slam_toolbox:
     # ROS Parameters
     odom_frame: odom
     map_frame: map
-    base_frame: base_link  # UNVERIFIED - must match robot_wiring.yaml frames.base and ekf.yaml
+    base_frame: base_footprint  # verified: Hiwonder controller.launch.py default
     scan_topic: /scan
     use_map_saver: true
     mode: mapping #localization
