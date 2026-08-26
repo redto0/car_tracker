@@ -1,9 +1,13 @@
 """
-STL-19P lidar (an LDRobot LD19/D500). Runs on the Pi.
+STL-19P lidar. Runs on the Pi.
 
-Wraps the vendor ldlidar_node launch file and normalizes its scan topic. The
-driver publishes /ldlidar_node/scan, but slam_toolbox, Nav2 and rviz all expect
-/scan -- normalizing here means nothing downstream needs to know otherwise.
+Wraps Hiwonder's peripherals/lidar.launch.py, which dispatches on the LIDAR_TYPE
+env var to the real driver -- ldlidar_stl_ros2 for the LD19 family (which the
+STL-19P is), oradar_lidar for the MS200. It already publishes /scan, so unlike
+the camera there is no vendor naming to normalize away.
+
+LIDAR_TYPE is set here from robot_wiring.yaml: their launch file reads it with
+os.environ[...], so leaving it unset is a KeyError that aborts the launch.
 
   ros2 launch car_tracker lidar.launch.py
 
@@ -16,7 +20,8 @@ import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
+from launch.actions import (DeclareLaunchArgument, GroupAction, IncludeLaunchDescription,
+                            SetEnvironmentVariable)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import PushRosNamespace, SetRemap
@@ -31,8 +36,8 @@ def generate_launch_description():
         wiring = yaml.safe_load(f)
 
     lidar = wiring['lidar']
-    scan_src = 'ldlidar_node/scan'
-    scan_dst = wiring['remaps'][scan_src]
+    topics = wiring['topics']
+    frames = wiring['frames']
 
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -46,17 +51,24 @@ def generate_launch_description():
             description='Namespace to push the lidar driver into.'),
     ]
 
+    env = [SetEnvironmentVariable(k, str(v)) for k, v in wiring['env'].items()]
+
     vendor = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([FindPackageShare(lidar['package']), 'launch', lidar['launch_file']])),
-        launch_arguments={'use_sim_time': use_sim_time}.items(),
+        launch_arguments={
+            'scan_topic': topics['scan'],
+            'lidar_frame': frames['lidar'],
+        }.items(),
     )
 
     return LaunchDescription(
-        args + [
+        args + env + [
             GroupAction([
                 PushRosNamespace(namespace),
-                SetRemap(src=scan_src, dst=scan_dst),
+                # Identity, but written out so the lidar's output topic is
+                # visible here rather than only inside the vendor launch file.
+                SetRemap(src='scan', dst=topics['scan']),
                 vendor,
             ])
         ]
