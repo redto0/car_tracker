@@ -1,4 +1,4 @@
-"""Nav2. See car_tracker_design/deployment/nav2.launch.md."""
+"""Nav2. See car_tracker_design/nodes/nav2.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription

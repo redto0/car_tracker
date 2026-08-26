@@ -1,4 +1,4 @@
-"""STL-19P lidar. See car_tracker_design/deployment/lidar.launch.md."""
+"""STL-19P lidar. See car_tracker_design/nodes/lidar.md."""
 
 import os
 

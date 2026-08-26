@@ -1,4 +1,4 @@
-"""RViz, desktop only. See car_tracker_design/deployment/rviz.launch.md."""
+"""RViz, desktop only. See car_tracker_design/nodes/rviz.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument

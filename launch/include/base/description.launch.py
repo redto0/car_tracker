@@ -1,4 +1,4 @@
-"""robot_state_publisher + vendor URDF. See car_tracker_design/deployment/description.launch.md."""
+"""robot_state_publisher + vendor URDF. See car_tracker_design/nodes/description.md."""
 
 import os
 
