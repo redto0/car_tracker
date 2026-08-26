@@ -29,19 +29,23 @@ tunables (resolution, JPEG quality, frame ids) are in config/camera_params.yaml.
 
 Pipeline, at the default empty namespace:
 
-  ascamera driver -> /camera/color/image_raw
-                     /camera/color/image_raw/compressed   (full res, vendor)
-                     /camera/color/camera_info
-                     /camera/depth/image_rect_raw
-                     /camera/depth/camera_info
+  vendor depth_camera -> /camera/color/image_raw
+                         /camera/color/image_raw/compressed   (vendor JPEG)
+                         /camera/color/camera_info
+                         /camera/depth/image_rect_raw
+                         /camera/depth/camera_info
         |
-        v  resize_node                       1920x1080 -> 640x360
+        v  resize_node                       640x480 -> 480x360
   /camera/color/downscaled/image_raw
         |
         v  republish raw -> compressed
   /camera/color/downscaled/image_raw/compressed    <- the Pi->desktop wire topic
 
-Full-res raw is ~1.5 Gbps and must never cross WiFi.
+Hiwonder configures ascamera_node at 640x480 @ 15 fps, not the 1920x1080 the
+product page advertises. Raw at that rate is still ~110 Mbit/s, so the JPEG step
+is what matters here; the resize is a secondary saving. 480x360 keeps 4:3 --
+resizing to 640x360 would stretch the image and quietly bias the terrain
+classifier.
 
   ros2 launch car_tracker camera.launch.py
   ros2 launch car_tracker camera.launch.py launch_driver:=false   # processing only
@@ -52,10 +56,12 @@ import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction
+from launch.actions import (DeclareLaunchArgument, GroupAction, IncludeLaunchDescription,
+                            SetEnvironmentVariable)
 from launch.conditions import IfCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import Node, PushRosNamespace
+from launch_ros.actions import Node, PushRosNamespace, SetRemap
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
@@ -82,8 +88,9 @@ def generate_launch_description():
         wiring = yaml.safe_load(f)
 
     driver_cfg = wiring['driver']
-    remaps = list(wiring['remaps'].items())
+    remaps = [SetRemap(src=k, dst=v) for k, v in wiring['remaps'].items()]
     pipe = wiring['pipeline']
+    env = [SetEnvironmentVariable(k, str(v)) for k, v in wiring['env'].items()]
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     namespace = LaunchConfiguration('namespace')
@@ -116,17 +123,14 @@ def generate_launch_description():
             description='Publish the downscaled + JPEG stream for the Pi->desktop link.'),
     ]
 
-    # Vendor driver. Remaps are relative so PushRosNamespace applies to them, and
-    # come straight from camera_wiring.yaml so the full vendor->normalized map is
-    # visible in one place.
-    driver = Node(
-        package=driver_cfg['package'],
-        executable=driver_cfg['executable'],
-        name='ascamera',
-        output='screen',
+    # Vendor driver. Hiwonder ships a launch file, not a bare node, so this is an
+    # include and the remaps go through SetRemap in the GroupAction below --
+    # remappings= cannot be passed to an IncludeLaunchDescription.
+    driver = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [FindPackageShare(driver_cfg['package']), 'launch', driver_cfg['launch_file']])),
         condition=IfCondition(launch_driver),
-        parameters=[params_file, {'use_sim_time': sim_time}],
-        remappings=remaps,
     )
 
     # image_proc::ResizeNode subscribes image/image_raw + image/camera_info and
@@ -165,9 +169,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription(
-        args + [
-            GroupAction([
-                PushRosNamespace(namespace),
+        args + env + [
+            GroupAction([PushRosNamespace(namespace)] + remaps + [
                 driver,
                 resize,
                 republish,

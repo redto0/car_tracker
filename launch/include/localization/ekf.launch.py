@@ -1,8 +1,8 @@
 """
 robot_localization EKFs. Runs on the Pi.
 
-ekf_odom publishes odom -> base_link and is always on. ekf_map publishes
-map -> base_link and is OFF by default, because slam_toolbox already publishes
+ekf_odom publishes odom -> base_footprint and is always on. ekf_map publishes
+map -> base_footprint and is OFF by default, because slam_toolbox already publishes
 map -> odom -- running both puts two broadcasters on one transform, which TF
 does not reject. It interleaves them and the robot appears to vibrate through
 walls.
@@ -34,8 +34,10 @@ def generate_launch_description():
     with open(_WIRING) as f:
         wiring = yaml.safe_load(f)
 
-    odom_topic = wiring['remaps']['odom']
-    imu_topic = wiring['remaps']['imu/data']
+    # odom_raw, not odom: /odom is Hiwonder's own EKF output. Their controller
+    # is launched with enable_odom:=false so this filter owns odom -> base_footprint.
+    odom_topic = wiring['topics']['odom_raw']
+    imu_topic = wiring['topics']['imu']
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     namespace = LaunchConfiguration('namespace')
@@ -61,7 +63,7 @@ def generate_launch_description():
                         'fight over map -> odom.'),
     ]
 
-    # Local filter: odom -> base_link. Continuous, never jumps.
+    # Local filter: odom -> base_footprint. Continuous, never jumps.
     ekf_odom = Node(
         package='robot_localization',
         executable='ekf_node',
@@ -69,8 +71,8 @@ def generate_launch_description():
         output='screen',
         parameters=[params_file, {'use_sim_time': sim_time}],
         remappings=[
-            ('odom', odom_topic),
-            ('imu/data', imu_topic),
+            ('odom_raw', odom_topic),
+            ('imu', imu_topic),
             # robot_localization publishes its estimate on odometry/filtered by
             # default. Split the two filters' outputs so they are separable in
             # rviz and rosbag.
@@ -80,7 +82,7 @@ def generate_launch_description():
         ],
     )
 
-    # Global filter: map -> base_link. Jumps on loop closure, which is correct;
+    # Global filter: map -> base_footprint. Jumps on loop closure, which is correct;
     # never differentiate its output for velocity.
     ekf_map = Node(
         package='robot_localization',
@@ -90,8 +92,8 @@ def generate_launch_description():
         condition=IfCondition(use_map_ekf),
         parameters=[params_file, {'use_sim_time': sim_time}],
         remappings=[
-            ('odom', odom_topic),
-            ('imu/data', imu_topic),
+            ('odom_raw', odom_topic),
+            ('imu', imu_topic),
             # slam_toolbox publishes its map-frame estimate on /pose.
             ('slam_pose', 'pose'),
             ('odometry/filtered', 'odometry/filtered/global'),

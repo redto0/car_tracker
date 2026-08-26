@@ -26,7 +26,9 @@ camera_resize:
     # use_scale must be false for width/height to take effect; when true the
     # node uses scale_width/scale_height and ignores width/height entirely.
     use_scale: false
-    width: 640
+    # 4:3 to match the vendor's 640x480. Do NOT use 640x360 -- that is 16:9 and
+    # would stretch the image, which biases a texture-based terrain classifier.
+    width: 480
     height: 360
     # 0=NEAREST 1=LINEAR 2=CUBIC 3=AREA 4=LANCZOS4.
     # AREA is better for large downscales, LINEAR is cheaper on the Pi. Revisit
