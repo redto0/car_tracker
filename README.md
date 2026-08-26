@@ -10,7 +10,7 @@ Each is independently launchable, so the build order can be walked one subsystem
 | File | Runs on | Doc |
 |---|---|---|
 | `robot.launch.py` | Pi | [robot](https://github.com/redto0/car_tracker_design/blob/main/launch/robot.launch.md) |
-| `compute.launch.py` | desktop | [compute](https://github.com/redto0/car_tracker_design/blob/main/launch/compute.launch.md) |
+| `desktop.launch.py` | desktop | [desktop](https://github.com/redto0/car_tracker_design/blob/main/launch/desktop.launch.md) |
 | `include/base/controller.launch.py` | Pi | [controller](https://github.com/redto0/car_tracker_design/blob/main/nodes/controller.md) |
 | `include/base/description.launch.py` | Pi | [description](https://github.com/redto0/car_tracker_design/blob/main/nodes/description.md) |
 | `include/sensors/camera.launch.py` | Pi | [camera](https://github.com/redto0/car_tracker_design/blob/main/nodes/camera.md) |
