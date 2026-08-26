@@ -9,17 +9,17 @@ Each is independently launchable, so the build order can be walked one subsystem
 
 | File | Runs on | Doc |
 |---|---|---|
-| `robot.launch.py` | Pi | [docs/robot.launch.md](docs/robot.launch.md) |
-| `compute.launch.py` | desktop | [docs/compute.launch.md](docs/compute.launch.md) |
-| `include/base/controller.launch.py` | Pi | [docs/controller.launch.md](docs/controller.launch.md) |
-| `include/base/description.launch.py` | Pi | [docs/description.launch.md](docs/description.launch.md) |
-| `include/sensors/camera.launch.py` | Pi | [docs/camera.launch.md](docs/camera.launch.md) |
-| `include/sensors/lidar.launch.py` | Pi | [docs/lidar.launch.md](docs/lidar.launch.md) |
-| `include/localization/ekf.launch.py` | Pi | [docs/ekf.launch.md](docs/ekf.launch.md) |
-| `include/slam/slam.launch.py` | Pi | [docs/slam.launch.md](docs/slam.launch.md) |
-| `include/navigation/nav2.launch.py` | Pi | [docs/nav2.launch.md](docs/nav2.launch.md) |
-| `include/navigation/mission.launch.py` | Pi | [docs/mission.launch.md](docs/mission.launch.md) |
-| `include/rviz/rviz.launch.py` | desktop | [docs/rviz.launch.md](docs/rviz.launch.md) |
+| `robot.launch.py` | Pi | [robot](https://github.com/redto0/car_tracker_design/blob/main/deployment/robot.launch.md) |
+| `compute.launch.py` | desktop | [compute](https://github.com/redto0/car_tracker_design/blob/main/deployment/compute.launch.md) |
+| `include/base/controller.launch.py` | Pi | [controller](https://github.com/redto0/car_tracker_design/blob/main/deployment/controller.launch.md) |
+| `include/base/description.launch.py` | Pi | [description](https://github.com/redto0/car_tracker_design/blob/main/deployment/description.launch.md) |
+| `include/sensors/camera.launch.py` | Pi | [camera](https://github.com/redto0/car_tracker_design/blob/main/deployment/camera.launch.md) |
+| `include/sensors/lidar.launch.py` | Pi | [lidar](https://github.com/redto0/car_tracker_design/blob/main/deployment/lidar.launch.md) |
+| `include/localization/ekf.launch.py` | Pi | [ekf](https://github.com/redto0/car_tracker_design/blob/main/deployment/ekf.launch.md) |
+| `include/slam/slam.launch.py` | Pi | [slam](https://github.com/redto0/car_tracker_design/blob/main/deployment/slam.launch.md) |
+| `include/navigation/nav2.launch.py` | Pi | [nav2](https://github.com/redto0/car_tracker_design/blob/main/deployment/nav2.launch.md) |
+| `include/navigation/mission.launch.py` | Pi | [mission](https://github.com/redto0/car_tracker_design/blob/main/deployment/mission.launch.md) |
+| `include/rviz/rviz.launch.py` | desktop | [rviz](https://github.com/redto0/car_tracker_design/blob/main/deployment/rviz.launch.md) |
 
 ## Config
 
