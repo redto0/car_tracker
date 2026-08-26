@@ -62,13 +62,13 @@ repositories:
     url: git@github.com:redto0/camera_to_ground_projection.git
     version: master
 
-  # Nav2 costmap layer for semantic segmentation. Upstream's "humble" branch is
-  # mislabeled Jazzy-era code and does not build on Humble, so we carry a fork.
-  # TODO: move to version "humble" once fix/humble-compat is merged in the fork.
+  # Nav2 costmap layer for semantic segmentation. Upstream kiwicampus' "humble"
+  # branch is mislabeled Jazzy-era code and does not build on Humble; our fork's
+  # humble branch carries the compat fix.
   semantic_segmentation_layer:
     type: git
     url: git@github.com:redto0/semantic_segmentation_layer.git
-    version: fix/humble-compat
+    version: humble
 
 # Dropped Phoenix go-kart leftovers: ackermann_msgs, twist_to_ackermann,
 # teleop_ack_joy (M1 is holonomic), depthai-ros (OAK-D, wrong camera), phnx_msgs.
