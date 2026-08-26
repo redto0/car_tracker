@@ -1,18 +1,4 @@
-"""
-Robot description: robot_state_publisher broadcasting base_footprint -> sensor
-frames from Hiwonder's mecanum xacro. Runs on the Pi.
-
-Wraps mentorpi_description rather than maintaining a second URDF that will drift
-out of sync with theirs.
-
-VERIFY THE URDF AGAINST THE PHYSICAL ROBOT before trusting any of it. A 5 cm or
-3 degree lidar extrinsic error smears the map on every turn and is
-indistinguishable from a SLAM tuning problem -- one of the most expensive
-mistakes available on this project.
-
-  ros2 launch car_tracker description.launch.py
-  ros2 run tf2_tools view_frames        # then check the tree
-"""
+"""robot_state_publisher + vendor URDF. See docs/description.launch.md."""
 
 import os
 

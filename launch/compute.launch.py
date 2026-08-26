@@ -1,18 +1,4 @@
-"""
-Desktop bringup. Runs on the DESKTOP, not the Pi.
-
-Everything here is advisory and safe to lose: heavy inference and
-visualization. Nothing on this side is in a control loop, so a WiFi drop
-degrades the map rather than crashing the robot.
-
-  ros2 launch car_tracker compute.launch.py
-
-Prerequisites, or nothing will appear:
-  - chrony synced with the Pi. Clock skew breaks TF in ways that look exactly
-    like SLAM bugs.
-  - CycloneDDS with unicast peers on both machines, matching ROS_DOMAIN_ID.
-    Default multicast discovery does not survive most WiFi APs.
-"""
+"""Desktop bringup. See docs/compute.launch.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription

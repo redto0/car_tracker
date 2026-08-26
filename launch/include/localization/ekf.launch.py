@@ -1,17 +1,4 @@
-"""
-robot_localization EKFs. Runs on the Pi.
-
-ekf_odom publishes odom -> base_footprint and is always on. ekf_map publishes
-map -> base_footprint and is OFF by default, because slam_toolbox already publishes
-map -> odom -- running both puts two broadcasters on one transform, which TF
-does not reject. It interleaves them and the robot appears to vibrate through
-walls.
-
-To use ekf_map, set slam_toolbox transform_publish_period to 0.0 first:
-  ros2 launch car_tracker ekf.launch.py use_map_ekf:=true
-
-  ros2 launch car_tracker ekf.launch.py
-"""
+"""robot_localization EKFs. See docs/ekf.launch.md."""
 
 import os
 

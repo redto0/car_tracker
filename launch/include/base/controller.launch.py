@@ -1,28 +1,4 @@
-"""
-MentorPi base driver: motors, wheel encoders, IMU. Runs on the Pi.
-
-Wraps Hiwonder's controller.launch.py rather than replacing it -- the STM32
-serial protocol is the tedious part and theirs works.
-
-TWO THINGS THIS FILE EXISTS TO GET RIGHT:
-
-1. enable_odom:=false. Their controller.launch.py runs its OWN robot_localization
-   ekf_node, fusing odom_raw + odom_rf2o + imu and publishing /odom plus the
-   odom -> base_footprint transform. Leaving it on alongside our ekf_odom would
-   put two EKFs and two broadcasters on that transform. TF does not reject that;
-   it interleaves them and the robot appears to vibrate through walls. Set
-   enable_odom:=true only if you want their filter INSTEAD of ours, in which
-   case do not launch ekf.launch.py at all.
-
-2. need_compile. Their launch files read os.environ['need_compile'] with a plain
-   dict lookup, so an unset variable is a KeyError that aborts the launch before
-   anything starts. Set here so it cannot be forgotten.
-
-  ros2 launch car_tracker controller.launch.py
-
-Their raw wheel odometry stays on /odom_raw and the filtered IMU on /imu, which
-is what ekf.launch.py consumes.
-"""
+"""MentorPi base driver. See docs/controller.launch.md."""
 
 import os
 

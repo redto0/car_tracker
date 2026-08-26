@@ -1,10 +1,4 @@
-"""
-RViz. Runs on the DESKTOP, never the Pi -- rendering on the robot wastes CPU
-that Nav2 and slam_toolbox need.
-
-  ros2 launch car_tracker rviz.launch.py
-  ros2 launch car_tracker rviz.launch.py rviz_config:=/path/to/other.rviz
-"""
+"""RViz, desktop only. See docs/rviz.launch.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument

@@ -1,26 +1,4 @@
-"""
-slam_toolbox. Runs on the Pi.
-
-Async online mode: drops scans it cannot process in time rather than falling
-behind, which is the right trade on a Pi 5 sharing CPU with Nav2.
-
-Two modes, selected by the `mode` argument:
-  mapping       build a new map (default)
-  localization  relocalize in a serialized map, and keep extending it
-
-Prefer serialize/deserialize over map_server + AMCL: it keeps the pose graph, so
-the map stays extendable instead of frozen.
-
-  ros2 launch car_tracker slam.launch.py
-  ros2 launch car_tracker slam.launch.py mode:=localization map_file:=/maps/lab
-
-Save a map:
-  ros2 service call /slam_toolbox/serialize_map \\
-      slam_toolbox/srv/SerializePoseGraph "{filename: '/maps/lab'}"
-
-If the map smears or shears, check TF, lidar extrinsics, scan timestamps and raw
-odometry -- in that order -- before touching anything in slam_toolbox.yaml.
-"""
+"""slam_toolbox, online async. See docs/slam.launch.md."""
 
 import os
 

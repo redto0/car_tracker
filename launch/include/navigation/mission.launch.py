@@ -1,15 +1,4 @@
-"""
-Mission manager. Runs on the Pi.
-
-Thin wrapper over car_tracker_path_resolver's own launch file, so the node stays
-independently launchable from its package and this tree only supplies the
-bringup-level arguments.
-
-The node decides WHERE to go; Nav2 plans and follows.
-
-  ros2 launch car_tracker mission.launch.py
-  ros2 launch car_tracker mission.launch.py auto_explore:=false
-"""
+"""Mission manager. See docs/mission.launch.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription

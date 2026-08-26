@@ -1,17 +1,4 @@
-"""
-Nav2. Runs on the Pi.
-
-Deliberately on the Pi, not the desktop. Nav2 is not the heavy part -- neural
-inference is -- and a global replan stalling behind a WiFi hiccup while the
-robot is moving puts it in a wall.
-
-Wraps nav2_bringup's navigation_launch.py, which brings up the controller,
-planner, smoother, behavior, bt_navigator, velocity_smoother and their lifecycle
-manager. Localization is NOT included: slam_toolbox provides map -> odom, so
-there is no AMCL here.
-
-  ros2 launch car_tracker nav2.launch.py
-"""
+"""Nav2. See docs/nav2.launch.md."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
