@@ -57,10 +57,6 @@ vcs import src < src/car_tracker/car_tracker.repos
 ```
 
 ```bash
-./src/car_tracker/scripts/prune_mentorpi.sh
-```
-
-```bash
 rosdep install --from-paths src --ignore-src -r -y
 ```
 
@@ -68,18 +64,19 @@ rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
 ```
 
-The prune step is **not optional**. Hiwonder ship a 17-package monorepo; without it,
-`yolov5_ros2` drags in torch and `large_models` drags in LLM clients, neither of which
-this project uses. The script drops `COLCON_IGNORE` **and** `AMENT_IGNORE` — colcon
-honours the first, rosdep's crawler honours the second, and skipping either leaves one
-tool walking into packages you meant to exclude. It is idempotent, so re-run it after
-every `vcs import`.
+`--symlink-install` is **required**: the wiring YAMLs are read eagerly from the installed
+share directory, so without symlinks you would be editing a stale copy.
 
 Apt packages the vendor launch files need but declare nowhere:
 
 ```bash
 sudo apt install ros-humble-imu-complementary-filter ros-humble-laser-filters ros-humble-nav2-common
 ```
+
+The MentorPi driver layer comes from
+[MentorPiDrivers](https://github.com/redto0/MentorPiDrivers), a stripped fork of
+Hiwonder's monorepo — see
+[deployment/dependencies.md](https://github.com/redto0/car_tracker_design/blob/main/deployment/dependencies.md).
 
 Architecture and conventions live in
 [car_tracker_design](https://github.com/redto0/car_tracker_design).

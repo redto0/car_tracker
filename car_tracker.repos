@@ -25,19 +25,17 @@ repositories:
     url: git@github.com:redto0/car_tracker_path_resolver.git
     version: feat/mission-manager
 
-  # Hiwonder's official MentorPi stack -- the vendor driver layer.
+  # Hiwonder's driver layer, forked and stripped.
   #
-  # This is a 17-package monorepo and we want six of them: driver/*, peripherals,
-  # interfaces and simulations/mentorpi_description. The rest (app, example,
-  # large_models, yolov5_ros2, multi, calibration, bringup, navigation, slam) pull
-  # heavy Python deps and duplicate our own stack, so scripts/prune_mentorpi.sh
-  # drops COLCON_IGNORE + AMENT_IGNORE on them. Run it after every vcs import.
-  #
-  # Pinned to the M1 branch -- master is a different chassis.
-  MentorPi:
+  # The fork removes the 10 packages we do not use (yolov5_ros2 pulls torch,
+  # large_models pulls LLM clients, navigation/slam duplicate our own stack),
+  # flattens the tree so packages sit at the repo root, and defaults every
+  # os.environ lookup so a missing variable cannot abort a launch.
+  # TODO: move to a release branch once feat/driver-subset is merged.
+  MentorPiDrivers:
     type: git
-    url: https://github.com/Hiwonder/MentorPi.git
-    version: MentorPi-M1
+    url: git@github.com:redto0/MentorPiDrivers.git
+    version: feat/driver-subset
 
   # LD19 / STL-19P lidar driver. Referenced by peripherals/lidar.launch.py but
   # declared nowhere in Hiwonder's package.xml files, so rosdep will not find it.
@@ -46,10 +44,7 @@ repositories:
     url: https://github.com/ldrobotSensorTeam/ldlidar_stl_ros2.git
     version: master
 
-  # ROS 2 port of imu_calib, referenced by peripherals/imu_filter.launch.py.
-  # Upstream dpkoch/imu_calib is catkin-only and will not build here.
-  # NOTE: this port builds `apply_calib_node`, but Hiwonder's launch file calls
-  # `apply_calib`. See deployment/controller.launch.md.
+  # ROS 2 port of imu_calib. Upstream dpkoch/imu_calib is catkin-only.
   imu_calib:
     type: git
     url: https://github.com/Nathan85001/imu_calib.git
