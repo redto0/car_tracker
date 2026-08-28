@@ -11,18 +11,19 @@
 
 joy_node:
   ros__parameters:
-    # SDL joystick index, which follows /dev/input/jsN order. NOT always 0.
+    # SDL joystick index -- NOT the /dev/input/jsN number.
     #
-    # On the car-tracker desktop the pad is index 2, because a "wch.cn K+M+"
-    # USB mouse enumerates as TWO phantom joysticks at js0 and js1 ahead of it.
-    # device_id 0 therefore opens the mouse, which produces no joystick events,
-    # and /joy stays silent with no error at all.
+    # ROS 2 joy uses SDL2, which enumerates over evdev with capability
+    # filtering, so non-joysticks are excluded from the count. On this desktop
+    # a USB mouse occupies js0 and js1 while the pad is js2, yet SDL sees only
+    # one joystick and it is index 0.
     #
-    # Resolve it per machine before assuming:
-    #   ls -l /dev/input/by-id/ | grep joystick
-    # The Pi has no such mouse, so the pad will most likely be 0 there --
-    # override with device_id:=0 on the robot.
-    device_id: 2
+    # Confirm by reading the startup log, which names the device it opened:
+    #   ros2 run joy joy_node --ros-args -p device_id:=0
+    #   [INFO] Opened joystick: Xbox One S Controller
+    # A wrong index logs NOTHING at all -- no error, no warning -- and /joy
+    # stays silent forever.
+    device_id: 0
     # Ignore stick noise around centre, so a resting controller does not creep.
     deadzone: 0.05
     # Republish the last state at this rate. Without it joy_node is event-driven

@@ -40,11 +40,12 @@ def generate_launch_description():
             'params_file', default_value=_DEFAULT_PARAMS,
             description='Axis mapping and scales (config/teleop.yaml).'),
         DeclareLaunchArgument(
-            'device_id', default_value='2',
-            description='SDL joystick index, following /dev/input/jsN order. '
-                        'Defaults to 2 for the desktop, where a USB mouse '
-                        'occupies js0 and js1. Use device_id:=0 on the Pi. '
-                        'Resolve with `ls -l /dev/input/by-id/ | grep joystick`.'),
+            'device_id', default_value='0',
+            description='SDL joystick index, NOT the /dev/input/jsN number. SDL '
+                        'filters non-joysticks out, so it is usually 0 even when '
+                        'the pad is js2. Confirm from the joy_node startup log, '
+                        'which names the device it opened; a wrong index logs '
+                        'nothing at all.'),
     ]
 
     joy = Node(
