@@ -1,0 +1,54 @@
+# Xbox controller teleop for the mecanum M1. Phase 1.
+#
+# Mecanum is holonomic: translation and rotation are independent. The left stick
+# sets a direction of travel as the VECTOR SUM of its two axes and the robot
+# moves that way without turning to face it. Do not map stick X to yaw -- that is
+# a car-style mapping and throws away the chassis.
+#
+# Axis indices are for an Xbox One/S pad on the Linux xpad driver. Verify with
+#   ros2 topic echo /joy
+# and fix here if they differ.
+
+joy_node:
+  ros__parameters:
+    # Which /dev/input/jsN. NOT always 0 -- it depends on plug order and on what
+    # else the machine has. `ls -l /dev/input/by-id/ | grep joystick` resolves it.
+    device_id: 0
+    # Ignore stick noise around centre, so a resting controller does not creep.
+    deadzone: 0.05
+    # Republish the last state at this rate. Without it joy_node is event-driven
+    # only, so a held stick stops producing messages and the deadman times out.
+    autorepeat_rate: 20.0
+
+teleop_twist_joy_node:
+  ros__parameters:
+    # -- Translation: left stick, both axes, summed into a velocity vector ------
+    axis_linear:
+      x: 1      # left stick vertical   -> forward/back
+      y: 0      # left stick horizontal -> strafe
+    scale_linear:
+      x: 0.25
+      y: 0.25
+    scale_linear_turbo:
+      x: 0.5
+      y: 0.5
+
+    # -- Rotation: right stick horizontal, independent of translation ----------
+    axis_angular:
+      yaw: 3
+    scale_angular:
+      yaw: 1.0
+    scale_angular_turbo:
+      yaw: 1.8
+
+    # -- Deadman ---------------------------------------------------------------
+    # Nothing moves unless enable_button is held. Releasing it publishes zero.
+    # require_enable_button must stay true: this is the only stop the robot has
+    # in Phase 1.
+    require_enable_button: true
+    enable_button: 4          # LB
+    enable_turbo_button: 5    # RB, hold with LB for the faster scales
+
+    # Publish a stamped Twist? Nav2 and the vendor controller both expect plain
+    # geometry_msgs/Twist on /cmd_vel, so no.
+    publish_stamped_twist: false

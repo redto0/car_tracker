@@ -50,6 +50,10 @@ def generate_launch_description():
                               description='slam_toolbox.'),
         DeclareLaunchArgument('use_nav', default_value='true',
                               description='Nav2.'),
+        DeclareLaunchArgument('use_teleop', default_value='false',
+                              description='Xbox controller teleop. Publishes to the same '
+                                          '/cmd_vel as Nav2, so run it with use_nav:=false '
+                                          'and use_mission:=false.'),
         DeclareLaunchArgument('use_mission', default_value='false',
                               description='Mission manager. FALSE by default -- with '
                                           'it on the robot starts picking its own goals '
@@ -71,6 +75,8 @@ def generate_launch_description():
                          IfCondition(LaunchConfiguration('use_ekf'))),
                 _include('slam', 'slam.launch.py',
                          IfCondition(LaunchConfiguration('use_slam'))),
+                _include('teleop', 'teleop.launch.py',
+                         IfCondition(LaunchConfiguration('use_teleop'))),
                 _include('navigation', 'nav2.launch.py',
                          IfCondition(LaunchConfiguration('use_nav'))),
                 _include('navigation', 'mission.launch.py',
