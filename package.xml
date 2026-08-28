@@ -6,7 +6,7 @@
     <description>
         Top-level bringup for the car-tracker stack on a MentorPi M1. Holds the launch tree
         and shared configuration; contains no nodes of its own. robot.launch.py brings up the
-        Pi, compute.launch.py brings up the desktop.
+        Pi, desktop.launch.py brings up the desktop.
     </description>
     <maintainer email="aboccacc@umich.edu">redto0</maintainer>
     <license>MIT</license>
@@ -21,6 +21,24 @@
     <exec_depend>image_proc</exec_depend>
     <exec_depend>image_transport</exec_depend>
     <exec_depend>image_transport_plugins</exec_depend>
+
+    <!--Teleop. Referenced only by teleop.launch.py, so nothing else pulls them in.-->
+    <exec_depend>joy</exec_depend>
+    <exec_depend>teleop_twist_joy</exec_depend>
+
+    <!--Vendor driver layer, from car_tracker.repos.-->
+    <exec_depend>controller</exec_depend>
+    <exec_depend>peripherals</exec_depend>
+    <exec_depend>mentorpi_description</exec_depend>
+
+    <!--laser_filters is used by peripherals/lidar.launch.py, which declares no
+        dependencies at all. Without this rosdep does not install it and the
+        lidar launch dies with "package not found".-->
+    <exec_depend>laser_filters</exec_depend>
+
+    <!--rviz2 is desktop.launch.py only; rclcpp_components hosts the nav2 container.-->
+    <exec_depend>rviz2</exec_depend>
+    <exec_depend>rclcpp_components</exec_depend>
 
     <!--Our nodes-->
     <exec_depend>car_tracker_path_resolver</exec_depend>
