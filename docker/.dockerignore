@@ -1,0 +1,5 @@
+# Build context is docker/ only; keep the workspace out of it. The workspace
+# arrives via bind mount at runtime, not via COPY.
+../../../build
+../../../install
+../../../log

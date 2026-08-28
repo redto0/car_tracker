@@ -1,0 +1,42 @@
+# Stable device names for the MentorPi M1.
+#
+# INSTALL ON THE PI HOST, NOT IN THE CONTAINER. udev runs on the host; the
+# container only sees the resulting nodes through the /dev bind mount.
+#   sudo cp 99-car-tracker.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# Why this file exists: the vendor's own rules create /dev/lidar, but
+# peripherals/launch/include/ldlidar_LD19.launch.py opens /dev/ldlidar, which
+# NO shipped rule creates. On the Hiwonder SD image something else supplied it.
+# Without this the lidar driver cannot open its port.
+#
+# GROUP is dialout rather than the vendor's "ubuntu"/"users", because the
+# account name differs on a self-flashed 26.04 image and dialout is standard.
+
+# --- Controller board (ttyACM, CH341). Carries motors, servos and the IMU. ---
+KERNEL=="ttyACM*", SUBSYSTEM=="tty", GROUP="dialout", MODE="0660", SYMLINK+="rrc"
+ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", ENV{ID_MM_PORT_IGNORE}="1"
+
+# --- LD19 lidar ---
+#
+# UNVERIFIED: these are the vendor's USB port-path matches, which depend on
+# which physical socket the lidar is in. They are a starting point, not a
+# guarantee. Derive the real match on the robot with:
+#
+#   udevadm info -a -n /dev/ttyUSB0 | grep -E 'KERNELS|idVendor|idProduct' | head
+#
+# then prefer a VID/PID rule (stable across sockets) over the port path.
+SUBSYSTEM=="tty", KERNELS=="1-2.3.4:1.0", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
+SUBSYSTEM=="tty", KERNELS=="1-2.1.4:1.0", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
+#
+# VID/PID form. Uncomment the line matching the adapter the LD19 actually uses
+# and drop the port-path rules above. CP2102 is the common one; CH340 also ships.
+# SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
+# SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
+
+# --- Depth camera (Angstrong, USB). Needs the ascamera driver, still missing. ---
+KERNEL=="video*", ATTRS{idVendor}=="2bc5", GROUP="video", MODE="0660", SYMLINK+="depth_cam"
+
+# --- Gamepad ---
+KERNEL=="js[0-9]*", SUBSYSTEM=="input", GROUP="input", MODE="0660"
+KERNEL=="event[0-9]*", SUBSYSTEM=="input", GROUP="input", MODE="0660"

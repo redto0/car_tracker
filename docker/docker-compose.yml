@@ -1,0 +1,68 @@
+# Bringup container for the MentorPi M1. Docs: car_tracker_design/deployment.md
+#
+#   cd ~/ws-car-tracker && docker compose -f src/car_tracker/docker/docker-compose.yml up -d ros
+#   docker compose -f src/car_tracker/docker/docker-compose.yml exec ros bash
+#
+# Copy docker/env.example to the workspace root as .env and set the IPs first.
+
+services:
+  ros:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER_UID: "${USER_UID:-1000}"
+        USER_GID: "${USER_GID:-1000}"
+    image: car_tracker:humble
+    container_name: car_tracker
+
+    # DDS discovery cannot traverse a bridge network. This is not optional.
+    network_mode: host
+
+    # The workspace is bind-mounted rather than baked in, so an edit on the Pi
+    # is live in the container and only needs a rebuild, not an image rebuild.
+    # Paths are relative to this file (src/car_tracker/docker).
+    volumes:
+      - ../../..:/ws
+      - /dev:/dev
+      - /etc/localtime:/etc/localtime:ro
+
+    # Why privileged rather than an explicit `devices:` list: the vendor drivers
+    # open udev SYMLINKS (/dev/rrc, /dev/ldlidar) that appear and disappear on
+    # replug. A `devices:` entry is resolved once at container start, so a
+    # device plugged in later is invisible until the container restarts, and a
+    # device missing at start is a hard startup failure. For a bench robot that
+    # trade is not worth it. The locked-down form is at the bottom of this file.
+    privileged: true
+
+    environment:
+      ROS_DOMAIN_ID: "${ROS_DOMAIN_ID:-42}"
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      CYCLONEDDS_URI: file:///ws/src/car_tracker/docker/cyclonedds.xml
+      CAR_TRACKER_IFACE: "${CAR_TRACKER_IFACE:-wlan0}"
+      PI_IP: "${PI_IP:?set PI_IP in .env}"
+      DESKTOP_IP: "${DESKTOP_IP:?set DESKTOP_IP in .env}"
+      # Vendor launch files read these with os.environ[...].
+      need_compile: "True"
+      LIDAR_TYPE: "${LIDAR_TYPE:-LD19}"
+      DEPTH_CAMERA_TYPE: "${DEPTH_CAMERA_TYPE:-ascamera}"
+
+    # Keep it up so `exec` works; bringup is launched by hand during Phase 1.
+    # Swap for the ros2 launch line once bringup is trusted to start clean.
+    command: ["sleep", "infinity"]
+    # command: ["ros2", "launch", "car_tracker", "robot.launch.py"]
+
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+# Locked-down alternative to `privileged: true`. Every device must exist at
+# `up` time or startup fails, so only use it once the hardware set is stable:
+#
+#   devices:
+#     - /dev/rrc:/dev/rrc
+#     - /dev/ldlidar:/dev/ldlidar
+#     - /dev/input/js0:/dev/input/js0
+#   device_cgroup_rules:
+#     - 'c 81:* rmw'    # video4linux, for the depth camera
+#     - 'c 189:* rmw'   # usb devices

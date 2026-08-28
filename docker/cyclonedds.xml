@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CycloneDDS with explicit unicast peers.
+
+  Multicast discovery is the default and it does not survive most WiFi APs.
+  They drop or mishandle it, and the symptom is nodes that simply never see
+  each other, with no error logged anywhere. Listing peers explicitly
+  sidesteps discovery entirely.
+
+  PI_IP, DESKTOP_IP and CAR_TRACKER_IFACE come from the environment
+  (see docker-compose.yml). Both machines need the SAME ROS_DOMAIN_ID.
+-->
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain id="any">
+    <General>
+      <!-- Pin the interface. The Pi has both wlan0 and sometimes eth0, and
+           Cyclone picking the wrong one is a silent no-comms failure. -->
+      <Interfaces>
+        <NetworkInterface name="${CAR_TRACKER_IFACE}" priority="default" multicast="false"/>
+      </Interfaces>
+      <AllowMulticast>false</AllowMulticast>
+    </General>
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <Peers>
+        <Peer address="${PI_IP}"/>
+        <Peer address="${DESKTOP_IP}"/>
+      </Peers>
+    </Discovery>
+    <Internal>
+      <!-- Images over WiFi: give the socket room so a burst does not stall. -->
+      <SocketReceiveBufferSize min="10MB"/>
+    </Internal>
+  </Domain>
+</CycloneDDS>
