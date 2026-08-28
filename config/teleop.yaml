@@ -11,9 +11,18 @@
 
 joy_node:
   ros__parameters:
-    # Which /dev/input/jsN. NOT always 0 -- it depends on plug order and on what
-    # else the machine has. `ls -l /dev/input/by-id/ | grep joystick` resolves it.
-    device_id: 0
+    # SDL joystick index, which follows /dev/input/jsN order. NOT always 0.
+    #
+    # On the car-tracker desktop the pad is index 2, because a "wch.cn K+M+"
+    # USB mouse enumerates as TWO phantom joysticks at js0 and js1 ahead of it.
+    # device_id 0 therefore opens the mouse, which produces no joystick events,
+    # and /joy stays silent with no error at all.
+    #
+    # Resolve it per machine before assuming:
+    #   ls -l /dev/input/by-id/ | grep joystick
+    # The Pi has no such mouse, so the pad will most likely be 0 there --
+    # override with device_id:=0 on the robot.
+    device_id: 2
     # Ignore stick noise around centre, so a resting controller does not creep.
     deadzone: 0.05
     # Republish the last state at this rate. Without it joy_node is event-driven
