@@ -11,10 +11,16 @@
 # gives the Angstrong depth camera, anything else falls back to usb_cam for the
 # monocular version.
 #
-# HEADS UP: the underlying `ascamera` package is NOT in the MentorPi repo. It
-# lives in a separate third_party_ros2/third_party_ws on Hiwonder's SD image,
-# referenced by absolute path (/home/ubuntu/third_party_ros2/...). It is the one
-# driver that still has to be recovered from the image or from Angstrong.
+# HEADS UP: the underlying `ascamera` package is NOT in the MentorPi repo and is
+# not on GitHub at all. It ships as a binary blob, `linux_ros.pkg`, unpacked with
+# unpack_linux_ros.sh. Inside are closed-source Angstrong libraries (libasuvc,
+# libAngKondyorArith, libalg_kunlun) plus a thin ROS 2 wrapper.
+#
+# ARCH RISK: the vendor docs show those .so files under arm-linux-gnueabihf --
+# 32-bit ARM. The Pi 5 runs arm64 and so does our container; a 32-bit .so cannot
+# link into a 64-bit binary. The pkg is per-arch (their gettarget.sh selects one)
+# so an aarch64-linux-gnu directory probably exists, but CHECK IT FIRST. If it is
+# missing, ascamera cannot run in a 64-bit userspace on the Pi at all.
 driver:
   package: peripherals
   launch_file: depth_camera.launch.py
@@ -27,9 +33,12 @@ env:
 
 # vendor topic -> normalized name
 #
-# ascamera_node runs under namespace="ascamera", hence the prefix. Confirm the
-# leaf names on the robot once the driver is recovered:
-#   ros2 topic list -t | grep -i ascamera
+# ascamera_node runs under namespace="ascamera", hence the prefix.
+#
+# CONFIRMED against Hiwonder's "3 Depth Camera Usage" doc (rqt topic list and the
+# rviz By-topic tree): rgb0/image and depth0/image_raw are exactly as named here.
+# The depth rows were inferred when this file was written and have now been
+# verified. The camera's optical frame is `ascamera_color_0`.
 #
 # The vendor publishes .../image_compressed instead of the conventional
 # .../image_raw/compressed, which breaks image_transport's compressed-topic
@@ -40,6 +49,8 @@ remaps:
   ascamera/camera_publisher/rgb0/camera_info: camera/color/camera_info
   ascamera/camera_publisher/depth0/image_raw: camera/depth/image_rect_raw
   ascamera/camera_publisher/depth0/camera_info: camera/depth/camera_info
+  # The driver publishes its own cloud, so we do not need depth_image_proc.
+  ascamera/camera_publisher/depth0/points: camera/depth/points
 
 # Internal pipeline stage names, so the whole topic graph is described here
 # rather than split between this file and the launch file.

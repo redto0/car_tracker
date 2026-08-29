@@ -40,6 +40,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ros-humble-joy ros-humble-teleop-twist-joy \
       # --- DDS. Cyclone with unicast peers; multicast does not survive WiFi. ---
       ros-humble-rmw-cyclonedds-cpp \
+      # --- ascamera (Angstrong depth camera) SDK build deps, per Hiwonder's
+      #     "1 Depth Camera Configuration". The driver itself is a binary blob
+      #     that is not in any repo; see car_tracker_design/nodes/camera.md. ---
+      libgflags-dev nlohmann-json3-dev libgoogle-glog-dev \
+      ros-humble-camera-info-manager ros-humble-image-publisher \
       # --- vendor driver python deps (Hiwonder declares none of these) ---
       python3-numpy python3-serial python3-transforms3d python3-yaml \
       python3-pygame \
