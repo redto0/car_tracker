@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+
+# Machine-specific docker env (IPs, uid/gid). Never commit.
+.env

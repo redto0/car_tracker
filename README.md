@@ -76,8 +76,8 @@ needs no container.
 
 ```bash
 cp src/car_tracker/docker/env.example .env      # then set PI_IP / DESKTOP_IP
-docker compose -f src/car_tracker/docker/docker-compose.yml up -d --build ros
-docker compose -f src/car_tracker/docker/docker-compose.yml exec ros colcon build --symlink-install
+docker compose --env-file .env -f src/car_tracker/docker/docker-compose.yml up -d --build ros
+docker compose --env-file .env -f src/car_tracker/docker/docker-compose.yml exec ros colcon build --symlink-install
 ```
 
 The workspace is bind-mounted, so an edit on the Pi needs a `colcon build`, not an image
