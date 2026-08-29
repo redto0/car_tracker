@@ -31,10 +31,12 @@
     <exec_depend>peripherals</exec_depend>
     <exec_depend>mentorpi_description</exec_depend>
 
-    <!--laser_filters is used by peripherals/lidar.launch.py, which declares no
-        dependencies at all. Without this rosdep does not install it and the
-        lidar launch dies with "package not found".-->
+    <!--laser_filters and imu_complementary_filter are used by peripherals'
+        lidar.launch.py and imu_filter.launch.py, which declare no dependencies
+        at all. Without these rosdep does not install them and the launch dies
+        with "package not found".-->
     <exec_depend>laser_filters</exec_depend>
+    <exec_depend>imu_complementary_filter</exec_depend>
 
     <!--rviz2 is desktop.launch.py only; rclcpp_components hosts the nav2 container.-->
     <exec_depend>rviz2</exec_depend>

@@ -36,6 +36,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       # --- lidar. laser_filters is required by peripherals/lidar.launch.py but
       #     is declared in no package.xml, so rosdep will not pull it in. ---
       ros-humble-laser-filters \
+      # --- IMU. peripherals/imu_filter.launch.py, same undeclared story. ---
+      ros-humble-imu-complementary-filter \
       # --- teleop. Same story: referenced by teleop.launch.py only. ---
       ros-humble-joy ros-humble-teleop-twist-joy \
       # --- DDS. Cyclone with unicast peers; multicast does not survive WiFi. ---
