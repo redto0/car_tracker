@@ -19,23 +19,25 @@ ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", ENV{ID_MM_PORT_IGNORE}="1"
 
 # --- LD19 lidar ---
 #
-# UNVERIFIED: these are the vendor's USB port-path matches, which depend on
-# which physical socket the lidar is in. They are a starting point, not a
-# guarantee. Derive the real match on the robot with:
+# VERIFIED 2026-08-29 against the real hardware: the LD19 presents as a CH340
+# USB-serial bridge, 1a86:7523, and enumerates as ttyUSB.
 #
-#   udevadm info -a -n /dev/ttyUSB0 | grep -E 'KERNELS|idVendor|idProduct' | head
+# The vendor's port-path rules (KERNELS=="1-2.3.4:1.0" / "1-2.1.4:1.0") are NOT
+# used, and are not merely fragile -- they are already wrong. On the test bench
+# the same lidar came up at 1-2.2:1.0, matching neither. VID/PID is stable
+# across sockets and machines; the port path is not.
 #
-# then prefer a VID/PID rule (stable across sockets) over the port path.
-SUBSYSTEM=="tty", KERNELS=="1-2.3.4:1.0", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
-SUBSYSTEM=="tty", KERNELS=="1-2.1.4:1.0", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
-#
-# VID/PID form. Uncomment the line matching the adapter the LD19 actually uses
-# and drop the port-path rules above. CP2102 is the common one; CH340 also ships.
-# SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
-# SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
+# No collision with the controller board: that is 1a86:55d4 (CH9102) on ttyACM,
+# a different product id on a different subsystem.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", GROUP="dialout", MODE="0660", SYMLINK+="ldlidar", SYMLINK+="lidar"
 
-# --- Depth camera (Angstrong, USB). Needs the ascamera driver, still missing. ---
+# --- Camera ---
+#
+# 2bc5 is Orbbec/Angstrong, the depth unit the ascamera driver targets.
+# 3482:6723 (NOVATEK "ASJ ZNX_NVT") is the UVC camera actually on the bench:
+# MJPG/YUYV, colour only, no depth stream. See car_tracker_design/nodes/camera.md.
 KERNEL=="video*", ATTRS{idVendor}=="2bc5", GROUP="video", MODE="0660", SYMLINK+="depth_cam"
+KERNEL=="video*", ATTRS{idVendor}=="3482", ATTRS{idProduct}=="6723", GROUP="video", MODE="0660", SYMLINK+="rgb_cam"
 
 # --- Gamepad ---
 KERNEL=="js[0-9]*", SUBSYSTEM=="input", GROUP="input", MODE="0660"
