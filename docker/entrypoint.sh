@@ -6,10 +6,12 @@ set -e
 source /opt/ros/humble/setup.bash
 
 # Overlay is only present after the first colcon build. Not an error before that.
-if [ -f /ws/install/setup.bash ]; then
-    source /ws/install/setup.bash
+# install_docker is the container's own install base (see colcon-defaults.yaml);
+# /ws/install belongs to the host and is built against different absolute paths.
+if [ -f /ws/install_docker/setup.bash ]; then
+    source /ws/install_docker/setup.bash
 else
-    echo "[entrypoint] /ws/install not found -- run 'colcon build --symlink-install' first." >&2
+    echo "[entrypoint] /ws/install_docker not found -- run 'colcon build --symlink-install' first." >&2
 fi
 
 # Vendor launch files read these with os.environ[...]; unset is a KeyError that

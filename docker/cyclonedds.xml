@@ -28,8 +28,20 @@
       </Peers>
     </Discovery>
     <Internal>
-      <!-- Images over WiFi: give the socket room so a burst does not stall. -->
-      <SocketReceiveBufferSize min="10MB"/>
+      <!-- DO NOT set a large `min` here. It is a HARD requirement: if the kernel
+           cannot grant it, Cyclone refuses to create the domain and EVERY node
+           dies with "rmw_create_node: failed to create domain". Stock
+           net.core.rmem_max is 212992 bytes, so a 10MB min bricks the stack.
+
+           So `min` is omitted entirely. Note also that Cyclone rejects "KB" as a
+           unit (it wants kB/KiB/MB/MiB), and a bad unit is equally fatal.
+
+           `max` is only a request, so it is safe. To actually get the bigger
+           buffer for image streaming, raise the kernel limit on the HOST (the
+           container shares the host network stack):
+             sudo sysctl -w net.core.rmem_max=10485760
+           and persist it in /etc/sysctl.d/. -->
+      <SocketReceiveBufferSize max="10MB"/>
     </Internal>
   </Domain>
 </CycloneDDS>

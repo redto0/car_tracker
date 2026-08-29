@@ -1,9 +1,15 @@
 # Bringup container for the MentorPi M1. Docs: car_tracker_design/deployment.md
 #
-#   cd ~/ws-car-tracker && docker compose -f src/car_tracker/docker/docker-compose.yml up -d ros
-#   docker compose -f src/car_tracker/docker/docker-compose.yml exec ros bash
+#   cd ~/ws-car-tracker
+#   docker compose --env-file .env -f src/car_tracker/docker/docker-compose.yml up -d ros
+#   docker compose --env-file .env -f src/car_tracker/docker/docker-compose.yml exec ros bash
 #
 # Copy docker/env.example to the workspace root as .env and set the IPs first.
+#
+# --env-file is not optional. With -f, Compose takes its project directory from
+# the COMPOSE FILE's location, so a bare `.env` in the workspace root is not
+# necessarily read. The PI_IP:? / DESKTOP_IP:? guards below would then abort with
+# a confusing "required variable is missing" instead of using your values.
 
 services:
   ros:
@@ -13,6 +19,7 @@ services:
       args:
         USER_UID: "${USER_UID:-1000}"
         USER_GID: "${USER_GID:-1000}"
+        INPUT_GID: "${INPUT_GID:-107}"
     image: car_tracker:humble
     container_name: car_tracker
 
@@ -35,10 +42,22 @@ services:
     # trade is not worth it. The locked-down form is at the bottom of this file.
     privileged: true
 
+    # Supplementary groups, applied at runtime. Belt and braces alongside the
+    # image's usermod: numeric USER silently drops them, and the GIDs can differ
+    # per machine. Check the target with `getent group input`.
+    group_add:
+      - "${DIALOUT_GID:-20}"
+      - "${VIDEO_GID:-44}"
+      - "${PLUGDEV_GID:-46}"
+      - "${INPUT_GID:-107}"
+
     environment:
       ROS_DOMAIN_ID: "${ROS_DOMAIN_ID:-42}"
       RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
       CYCLONEDDS_URI: file:///ws/src/car_tracker/docker/cyclonedds.xml
+      # Sends container builds to build_docker/ and install_docker/ so they do
+      # not fight the host's build/ over path-pinned CMake caches.
+      COLCON_DEFAULTS_FILE: /ws/src/car_tracker/docker/colcon-defaults.yaml
       CAR_TRACKER_IFACE: "${CAR_TRACKER_IFACE:-wlan0}"
       PI_IP: "${PI_IP:?set PI_IP in .env}"
       DESKTOP_IP: "${DESKTOP_IP:?set DESKTOP_IP in .env}"

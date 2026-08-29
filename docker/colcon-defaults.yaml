@@ -1,0 +1,21 @@
+# Keeps the container's build products separate from the host's.
+#
+# The workspace is bind-mounted, so host and container share src/ -- but they see
+# it at DIFFERENT absolute paths (/home/<user>/ws-car-tracker vs /ws). CMake
+# caches store absolute paths, so a shared build/ makes each build fail for the
+# other with "The source ... does not match the source ... used to generate cache".
+#
+# Pointed at by COLCON_DEFAULTS_FILE in docker-compose.yml, so a plain
+# `colcon build` inside the container picks this up with no extra flags.
+build:
+  build-base: /ws/build_docker
+  install-base: /ws/install_docker
+  # Sized for the Pi 5: 4 cores but only 8 GB RAM. colcon defaults to one job
+  # per core, and nav2 / robot_localization / semantic_segmentation_layer each
+  # peak over 1 GB in g++, so 4 concurrent builds plus the toolchain will OOM.
+  # An OOM kill here looks like a random compiler crash, not a memory problem.
+  # On a big desktop, override with --parallel-workers 8.
+  parallel-workers: 2
+test:
+  build-base: /ws/build_docker
+  install-base: /ws/install_docker
