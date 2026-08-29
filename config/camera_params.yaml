@@ -42,18 +42,6 @@
 
 camera_resize:
   ros__parameters:
-    # image_proc publishes best-effort, image_transport republish subscribes
-    # reliable, and the mismatch kills the chain silently: "requesting
-    # incompatible QoS. No messages will be sent to it." Nothing errors, the
-    # topic simply stays empty. Force the publisher reliable so they match.
-    qos_overrides:
-      /camera/color/downscaled/image_raw:
-        publisher:
-          reliability: reliable
-          history: keep_last
-          depth: 10
-    # use_scale must be false for width/height to take effect; when true the
-    # node uses scale_width/scale_height and ignores width/height entirely.
     use_scale: false
     # 4:3 to match the vendor's 640x480. Do NOT use 640x360 -- that is 16:9 and
     # would stretch the image, which biases a texture-based terrain classifier.
