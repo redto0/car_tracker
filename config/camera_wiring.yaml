@@ -21,9 +21,19 @@
 # link into a 64-bit binary. The pkg is per-arch (their gettarget.sh selects one)
 # so an aarch64-linux-gnu directory probably exists, but CHECK IT FIRST. If it is
 # missing, ascamera cannot run in a 64-bit userspace on the Pi at all.
+# The ascamera node is launched DIRECTLY, not through a vendor launch file.
+# Both peripherals/depth_camera.launch.py and ascamera's own hp60c.launch.py
+# hardcode confiPath to a path that exists only on Hiwonder's SD image
+# (/home/ubuntu/third_party_ros2/... and /home/hiwonder/ros_ws/... respectively),
+# so including either fails with "cannot find config file". camera.launch.py
+# resolves confiPath from the installed ascamera share directory instead.
 driver:
-  package: peripherals
-  launch_file: depth_camera.launch.py
+  package: ascamera
+  executable: ascamera_node
+  # The node is RENAMED rather than pushed into a namespace. The vendor publishes
+  # private (~/) topics, so they resolve under the node name: naming it 'ascamera'
+  # gives /ascamera/rgb0/image directly, with no redundant camera_publisher level.
+  name: ascamera
 
 # Same env vars as robot_wiring.yaml -- their launch files use os.environ[...],
 # so an unset variable is a KeyError that aborts the launch.
@@ -32,6 +42,12 @@ env:
   DEPTH_CAMERA_TYPE: ascamera
 
 # vendor topic -> normalized name
+#
+# Keys are ABSOLUTE. The driver runs in its own `ascamera` namespace and publishes
+# PRIVATE (~/) topics, so they resolve to /ascamera/camera_publisher/... A relative
+# key would be resolved against the node's namespace and become
+# /ascamera/ascamera/camera_publisher/..., matching nothing -- and the failure is
+# silent: both topic sets appear and the downstream stages just never get input.
 #
 # ascamera_node runs under namespace="ascamera", hence the prefix.
 #
@@ -44,13 +60,16 @@ env:
 # .../image_raw/compressed, which breaks image_transport's compressed-topic
 # discovery. That remap is what makes it work downstream.
 remaps:
-  ascamera/camera_publisher/rgb0/image: camera/color/image_raw
-  ascamera/camera_publisher/rgb0/image_compressed: camera/color/image_raw/compressed
-  ascamera/camera_publisher/rgb0/camera_info: camera/color/camera_info
-  ascamera/camera_publisher/depth0/image_raw: camera/depth/image_rect_raw
-  ascamera/camera_publisher/depth0/camera_info: camera/depth/camera_info
-  # The driver publishes its own cloud, so we do not need depth_image_proc.
-  ascamera/camera_publisher/depth0/points: camera/depth/points
+  /ascamera/rgb0/image: /camera/color/image_raw
+  /ascamera/rgb0/image_compressed: /camera/color/image_raw/compressed
+  /ascamera/rgb0/camera_info: /camera/color/camera_info
+  /ascamera/depth0/image_raw: /camera/depth/image_rect_raw
+  /ascamera/depth0/camera_info: /camera/depth/camera_info
+  # The driver publishes its own cloud, so nothing Pi-side needs depth_image_proc.
+  # Do NOT stream this: measured at 194 Mbit/s, ~60% of the camera's total output,
+  # and it is fully derivable from depth + camera_info. Send compressed depth over
+  # the wire and regenerate the cloud on the desktop with depth_image_proc instead.
+  /ascamera/depth0/points: /camera/depth/points
 
 # Internal pipeline stage names, so the whole topic graph is described here
 # rather than split between this file and the launch file.
@@ -59,3 +78,7 @@ pipeline:
   color_info: camera/color/camera_info
   downscaled_image: camera/color/downscaled/image_raw
   downscaled_info: camera/color/downscaled/camera_info
+  # Depth is republished as compressedDepth (PNG), never JPEG: it is 16-bit
+  # millimetres, and an 8-bit lossy codec silently corrupts ranges into
+  # plausible-looking garbage. Measured 52.6 Mbit/s raw -> ~2.3 Mbit/s PNG.
+  depth_image: camera/depth/image_rect_raw

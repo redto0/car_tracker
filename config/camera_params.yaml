@@ -14,15 +14,44 @@
 #
 # UNVERIFIED. These are the shape of the block, not confirmed vendor API. Dump
 # the real ones with `ros2 param dump /ascamera` and replace wholesale.
-ascamera:
+# Node name is camera_publisher, NOT ascamera. The vendor names its node
+# camera_publisher and publishes private (~/) topics under it, so a section
+# keyed 'ascamera' silently never applies. The /**/ prefix is also required: the
+# node's fully qualified name is /ascamera/camera_publisher, and a bare
+# 'camera_publisher:' key does not match a namespaced node -- and the driver then starts
+# streaming and stops one second later, because the size/fps parameters it
+# requires are left unset.
+/**/ascamera:
   ros__parameters:
     # Must agree with the URDF or the projection into the map frame is silently
     # wrong -- and a wrong extrinsic looks exactly like a SLAM tuning problem.
     color_frame_id: camera_color_optical_frame
     depth_frame_id: camera_depth_optical_frame
+    # Required by the SDK; without them the stream does not stay up.
+    rgb_width: 640
+    rgb_height: 480
+    depth_width: 640
+    depth_height: 480
+    fps: 15
+    pub_tfTree: true
+    # The driver's own coloured cloud measured 194 Mbit/s. Leave it off and
+    # regenerate desktop-side from depth + camera_info when a cloud is needed.
+    color_pcl: false
+    usb_bus_no: -1
+    usb_path: "null"
 
 camera_resize:
   ros__parameters:
+    # image_proc publishes best-effort, image_transport republish subscribes
+    # reliable, and the mismatch kills the chain silently: "requesting
+    # incompatible QoS. No messages will be sent to it." Nothing errors, the
+    # topic simply stays empty. Force the publisher reliable so they match.
+    qos_overrides:
+      /camera/color/downscaled/image_raw:
+        publisher:
+          reliability: reliable
+          history: keep_last
+          depth: 10
     # use_scale must be false for width/height to take effect; when true the
     # node uses scale_width/scale_height and ignores width/height entirely.
     use_scale: false

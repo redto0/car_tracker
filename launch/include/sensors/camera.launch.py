@@ -1,25 +1,3 @@
-# MIT License
-#
-# Copyright (c) 2021 Intelligent Systems Club
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 """MentorPi depth camera bringup. See car_tracker_design/nodes/camera.md."""
 
 import os
@@ -94,14 +72,28 @@ def generate_launch_description():
             description='Publish the downscaled + JPEG stream for the Pi->desktop link.'),
     ]
 
-    # Vendor driver. Hiwonder ships a launch file, not a bare node, so this is an
-    # include and the remaps go through SetRemap in the GroupAction below --
-    # remappings= cannot be passed to an IncludeLaunchDescription.
-    driver = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution(
-                [FindPackageShare(driver_cfg['package']), 'launch', driver_cfg['launch_file']])),
+    # ascamera_node is launched directly rather than through a vendor launch file.
+    # Both of theirs hardcode confiPath to a path that only exists on Hiwonder's SD
+    # image, so including either dies with "cannot find config file" -- after the
+    # node has already created its topics, which reads as a camera fault rather
+    # than a packaging one. Resolving the path from the installed share dir here
+    # is what makes this work on a machine that is not theirs.
+    driver = Node(
+        package=driver_cfg['package'],
+        executable=driver_cfg['executable'],
+        name=driver_cfg['name'],
+        # NO name= override. The vendor publishes PRIVATE (~/) topics, so they
+        # resolve under the NODE NAME: the default 'camera_publisher' yields
+        # <ns>/camera_publisher/rgb0/image, which is what the remaps and
+        # Hiwonder's own docs expect. Setting name= here silently renames every
+        # topic, so no remap matches and the pipeline gets no input.
+        output='screen',
         condition=IfCondition(launch_driver),
+        parameters=[params_file, {
+            'use_sim_time': sim_time,
+            'confiPath': PathJoinSubstitution(
+                [FindPackageShare(driver_cfg['package']), 'configurationfiles']),
+        }],
     )
 
     # image_proc::ResizeNode subscribes image/image_raw + image/camera_info and
@@ -139,12 +131,30 @@ def generate_launch_description():
         ],
     )
 
+    # Depth over the wire: compressedDepth is PNG-based and lossless, which JPEG
+    # is not. Measured 52.6 Mbit/s raw -> ~2.3 Mbit/s. Kept separate from the RGB
+    # republish because the transports differ.
+    depth_republish = Node(
+        package='image_transport',
+        executable='republish',
+        name='depth_republish',
+        output='screen',
+        condition=IfCondition(publish_downscaled),
+        arguments=['raw', 'compressedDepth'],
+        parameters=[params_file, {'use_sim_time': sim_time}],
+        remappings=[
+            ('in', pipe['depth_image']),
+            ('out', pipe['depth_image']),
+        ],
+    )
+
     return LaunchDescription(
         args + env + [
             GroupAction([PushRosNamespace(namespace)] + remaps + [
                 driver,
                 resize,
                 republish,
+                depth_republish,
             ])
         ]
     )
