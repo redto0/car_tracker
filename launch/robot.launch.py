@@ -11,17 +11,24 @@ _PKG = 'car_tracker'
 
 
 def _include(subdir, filename, condition=None, extra=None):
-    """Include one file from the include/ tree, forwarding the common args."""
+    """Include one file from include/, each in its own scope. See launch/robot.launch.md."""
     launch_args = {
         'use_sim_time': LaunchConfiguration('use_sim_time'),
         'namespace': LaunchConfiguration('namespace'),
     }
     if extra:
         launch_args.update(extra)
-    return IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution([FindPackageShare(_PKG), 'launch', 'include', subdir, filename])),
-        launch_arguments=launch_args.items(),
+    return GroupAction(
+        [
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    PathJoinSubstitution(
+                        [FindPackageShare(_PKG), 'launch', 'include', subdir, filename])),
+                launch_arguments=launch_args.items(),
+            )
+        ],
+        scoped=True,  # pops each include's args; parent scope still forwarded in
+
         condition=condition,
     )
 
