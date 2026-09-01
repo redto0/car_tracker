@@ -50,7 +50,36 @@ copy shadows the apt one and the build breaks in confusing ways.
    dependencies. One entry (`car_tracker_path_resolver`) is a private repo, so your SSH key
    must be authorised on it or the import fails for that repo only
 6. Cd to the workspace root, and run `rosdep install --from-paths src --ignore-src -r -y` to
-   install binary dependencies
+   install binary dependencies. On a fresh jammy box this resolves everything the
+   `package.xml` files declare, which is the whole apt row of the table above. If you want
+   the one-liner instead of trusting rosdep, or you are only building part of the tree:
+
+   ```bash
+   sudo apt install -y \
+     ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-slam-toolbox \
+     ros-humble-robot-localization ros-humble-laser-filters \
+     ros-humble-imu-complementary-filter ros-humble-joy ros-humble-teleop-twist-joy \
+     ros-humble-image-proc ros-humble-image-transport-plugins \
+     ros-humble-rmw-cyclonedds-cpp ros-humble-xacro
+
+   # desktop only -- deliberately NOT in the Dockerfile, rviz has no business
+   # running on the Pi and it is a large install
+   sudo apt install -y ros-humble-rviz2
+   ```
+
+   `rmw_cyclonedds_cpp` matters on **both** machines, not just the Pi. The compose file
+   sets `RMW_IMPLEMENTATION=rmw_cyclonedds_cpp` for the container; if the desktop falls
+   back to Fast DDS you get a uniquely misleading half-failure — the desktop **lists**
+   every container node and topic, so everything looks fine, but `ros2 topic hz` on them
+   returns nothing. Measured: desktop on Cyclone reads a containerised `/scan` at
+   9.998 Hz; the same publisher read from Fast DDS never delivers a message.
+
+   So the desktop shell needs both, not just the package:
+
+   ```bash
+   export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+   export CYCLONEDDS_URI=file://$PWD/src/car_tracker/docker/cyclonedds.xml
+   ```
 7. Remember to source ROS2 before building `source /opt/ros/humble/setup.bash` and add to
    your bashrc with `echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc`
 8. Still in workspace root, run `colcon build --symlink-install` to build the workspace.
@@ -58,14 +87,48 @@ copy shadows the apt one and the build breaks in confusing ways.
    the installed share directory, so without symlinks you edit a stale copy and your changes
    appear to do nothing
 9. Make sure your user is a part of the unix `dialout`, `video` and `input` groups. This
-   allows it to connect to USB devices. Log out and back in afterwards — group changes do not
-   apply to an existing session
+   allows it to connect to USB devices:
+
+   ```bash
+   sudo usermod -aG dialout,video,input $USER
+   ```
+
+   Log out and back in afterwards — group changes do not apply to an existing session, and
+   `newgrp` only fixes the one shell you run it in. Verify with `id -nG`.
+
+   Each group gates a different device, and the failure is silent in every case:
+   `dialout` for the lidar and controller board (both tty), `video` for the cameras,
+   `input` for `/dev/input/js*`. Without `input` the gamepad cannot be opened and `/joy`
+   simply never publishes — which looks exactly like the wrong `device_id`, so you can
+   lose an afternoon to it.
 10. Install the udev rules so the drivers find their devices, then replug:
     `./docker/install-udev.sh` and verify with `ls -l /dev/rrc /dev/ldlidar`.
     The vendor drivers open **symlinks**, not raw devices, and no rule shipped by Hiwonder
     creates `/dev/ldlidar` even though the LD19 launch opens it
 
 The repo should now be built, and launch-able on the robot or the desktop.
+
+#### If SLAM dies on a missing libceres
+
+```
+[FATAL] [slam_toolbox]: Failed to create solver_plugins::CeresSolver ...
+  dlopen error: libceres.so.2: cannot open shared object file
+```
+
+`libceres2` is a declared dependency **of `ros-humble-slam-toolbox`**, not of this repo, so
+apt normally pulls it in and neither the table above nor rosdep needs to mention it. Seeing
+this error means slam_toolbox got onto the machine some way other than apt (check with
+`dpkg-query -W ros-humble-slam-toolbox`; "no packages found" while
+`/opt/ros/humble/share/slam_toolbox` exists is the giveaway). Hiwonder's original image is
+one way that happens. Fix the runtime library directly:
+
+```bash
+sudo apt install -y libceres2
+```
+
+or reinstall the package properly with `sudo apt install --reinstall ros-humble-slam-toolbox`
+so its dependencies are tracked from then on. The Docker image is unaffected: it apt-installs
+slam_toolbox, so `libceres2` comes with it.
 
 ### On the Pi, ROS runs in Docker
 
