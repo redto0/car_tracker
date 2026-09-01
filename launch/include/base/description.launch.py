@@ -39,7 +39,12 @@ def generate_launch_description():
     vendor = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([FindPackageShare(desc['package']), 'launch', desc['launch_file']])),
-        launch_arguments={'use_sim_time': use_sim_time}.items(),
+        launch_arguments={
+            'use_sim_time': use_sim_time,
+            # vendor defaults both to 'true'; headless. See nodes/description.md.
+            'use_gui': 'false',
+            'use_rviz': 'false',
+        }.items(),
     )
 
     return LaunchDescription(
