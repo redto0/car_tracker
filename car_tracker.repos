@@ -26,6 +26,16 @@ repositories:
     url: git@github.com:redto0/car_tracker_path_resolver.git
     version: master
 
+  # Architecture, conventions and per-node docs. Documentation only: it carries
+  # no package.xml/CMakeLists.txt, so colcon walks past it and nothing needs a
+  # COLCON_IGNORE. Pulled in so the docs sit beside the code they describe
+  # instead of only living on GitHub. PRIVATE, same as the path resolver: this
+  # is the second entry that needs an authorised SSH key.
+  car_tracker_design:
+    type: git
+    url: git@github.com:redto0/car_tracker_design.git
+    version: main
+
   # Hiwonder's driver layer, forked and stripped.
   #
   # The fork removes the 10 packages we do not use (yolov5_ros2 pulls torch,

@@ -42,6 +42,15 @@
     <exec_depend>rviz2</exec_depend>
     <exec_depend>rclcpp_components</exec_depend>
 
+    <!--DDS, both machines. See dependencies.md.-->
+    <exec_depend>rmw_cyclonedds_cpp</exec_depend>
+
+    <!--System libs that slam_toolbox and nav2_map_server need but that apt only
+        pulls in when THEY were installed via apt. Declared here so rosdep
+        installs them regardless. See dependencies.md.-->
+    <exec_depend>libceres-dev</exec_depend>
+    <exec_depend>graphicsmagick</exec_depend>
+
     <!--Our nodes-->
     <exec_depend>car_tracker_path_resolver</exec_depend>
 
