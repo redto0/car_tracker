@@ -25,11 +25,10 @@ def generate_launch_description():
             description='Set false to include this file without actually starting rviz.'),
         DeclareLaunchArgument(
             'rviz_config',
-            # slam_toolbox ships a config with the map, scan and pose graph
-            # already set up, which is the right starting view for steps 5-6 of
-            # the build order. Swap for a project config once one exists.
+            # Project config. slam_toolbox's default is Grid + TF only -- no Map
+            # and no LaserScan display -- so it shows nothing of the SLAM output.
             default_value=PathJoinSubstitution(
-                [FindPackageShare('slam_toolbox'), 'config', 'slam_toolbox_default.rviz']),
+                [FindPackageShare('car_tracker'), 'config', 'car_tracker.rviz']),
             description='RViz config file.'),
     ]
 
@@ -41,6 +40,13 @@ def generate_launch_description():
         condition=IfCondition(use_rviz),
         arguments=['-d', rviz_config],
         parameters=[{'use_sim_time': sim_time}],
+        # Identity, but recorded: these are the topics the loaded .rviz config
+        # publishes from its tools. Confirmed against the config file itself.
+        remappings=[
+            ('initialpose', 'initialpose'),
+            ('goal_pose', 'goal_pose'),
+            ('clicked_point', 'clicked_point'),
+        ],
     )
 
     return LaunchDescription(args + [rviz])

@@ -1,9 +1,10 @@
 """Mission manager. See car_tracker_design/nodes/path_resolver.md."""
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import SetRemap
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -36,4 +37,15 @@ def generate_launch_description():
         }.items(),
     )
 
-    return LaunchDescription(args + [mission])
+    # Topic surface of the included node, recorded here so it is visible without
+    # opening path_resolver. Confirmed against PathResolver_node.cpp:
+    #   goal_poi  PoseStamped     target of interest
+    #   map       OccupancyGrid   transient_local, matches slam_toolbox's latch
+    #   navigate_to_pose          Nav2 action, remaps on its base name
+    topics = GroupAction([
+        SetRemap(src='goal_poi', dst='goal_poi'),
+        SetRemap(src='map', dst='map'),
+        mission,
+    ])
+
+    return LaunchDescription(args + [topics])
