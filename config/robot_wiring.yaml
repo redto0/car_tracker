@@ -19,6 +19,9 @@ base:
 lidar:
   package: peripherals
   launch_file: lidar.launch.py
+  # Serial device. udev symlink by default, raw device to skip udev entirely.
+  # See nodes/lidar.md.
+  port: /dev/ldlidar
 
 # robot_state_publisher + the mecanum xacro.
 description:
@@ -36,10 +39,14 @@ description:
 #   LIDAR_TYPE          MS200 | LD19 | A1 | G4 | LD14P. MentorPi ships the
 #                       STL-19P, which is the LD19 family.
 #   DEPTH_CAMERA_TYPE   'ascamera' for the depth camera version.
+#   MACHINE_TYPE        MentorPi_Mecanum | MentorPi_Acker. mentorpi.xacro reads
+#                       it as $(env ...), which has no default. See
+#                       nodes/description.md.
 env:
   need_compile: 'True'
   LIDAR_TYPE: LD19
   DEPTH_CAMERA_TYPE: ascamera
+  MACHINE_TYPE: MentorPi_Mecanum
 
 # Topic names, verified from Hiwonder's launch files and controller/config/ekf.yaml.
 #

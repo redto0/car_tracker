@@ -44,6 +44,7 @@ def generate_launch_description():
         launch_arguments={
             'scan_topic': topics['scan'],
             'lidar_frame': frames['lidar'],
+            'port_name': lidar.get('port', '/dev/ldlidar'),
         }.items(),
     )
 
