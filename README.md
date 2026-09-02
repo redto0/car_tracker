@@ -101,10 +101,14 @@ copy shadows the apt one and the build breaks in confusing ways.
    `input` for `/dev/input/js*`. Without `input` the gamepad cannot be opened and `/joy`
    simply never publishes — which looks exactly like the wrong `device_id`, so you can
    lose an afternoon to it.
-10. Install the udev rules so the drivers find their devices, then replug:
-    `./docker/install-udev.sh` and verify with `ls -l /dev/rrc /dev/ldlidar`.
+10. Install the udev rules so the drivers find their devices: `./docker/install-udev.sh`.
+    It reloads and triggers, so devices already plugged in get their symlinks without a
+    replug, and it prints what it created — `/dev/rrc`, `/dev/imu`, `/dev/ldlidar`. A
+    `MISSING` line means that device is not plugged in.
     The vendor drivers open **symlinks**, not raw devices, and no rule shipped by Hiwonder
-    creates `/dev/ldlidar` even though the LD19 launch opens it
+    creates `/dev/ldlidar` even though the LD19 launch opens it.
+    `/dev/imu` is an alias for `/dev/rrc`: the IMU is on the controller board and shares
+    its serial stream, so there is no separate device to open
 
 The repo should now be built, and launch-able on the robot or the desktop.
 
