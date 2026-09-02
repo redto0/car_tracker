@@ -3,7 +3,7 @@
 Topic surface
 -------------
 subscribes  scan          sensor_msgs/LaserScan   from the lidar driver
-publishes   odom_rf2o     nav_msgs/Odometry       ekf_odom's odom0
+publishes   odom_raw      nav_msgs/Odometry       ekf_odom's odom0
 
 Publishes no TF. ekf_odom owns odom -> base_footprint; two broadcasters on one
 transform is the failure this launch exists to avoid.
@@ -28,7 +28,7 @@ def generate_launch_description():
         wiring = yaml.safe_load(f)
 
     scan_topic = wiring['topics']['scan']
-    odom_topic = wiring['topics']['odom_rf2o']
+    odom_topic = wiring['topics']['odom_raw']
     frames = wiring['frames']
 
     use_sim_time = LaunchConfiguration('use_sim_time')

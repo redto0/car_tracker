@@ -119,7 +119,7 @@ The repo should now be built, and launch-able on the robot or the desktop.
     # in another shell:
     ros2 topic hz /scan                     # ~10 Hz
     ros2 topic hz /imu                      # ~48 Hz raw, ~96 Hz filtered
-    ros2 topic hz /odometry/filtered/local  # 30 Hz, matches ekf.yaml
+    ros2 topic hz /odom                     # 30 Hz, ekf_odom fused output
     ros2 lifecycle get /controller_server   # active [3]
     ```
 
