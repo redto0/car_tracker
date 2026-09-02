@@ -13,9 +13,19 @@
 # GROUP is dialout rather than the vendor's "ubuntu"/"users", because the
 # account name differs on a self-flashed 26.04 image and dialout is standard.
 
-# --- Controller board (ttyACM, CH341). Carries motors, servos and the IMU. ---
-KERNEL=="ttyACM*", SUBSYSTEM=="tty", GROUP="dialout", MODE="0660", SYMLINK+="rrc"
-ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", ENV{ID_MM_PORT_IGNORE}="1"
+# --- Controller board (ttyACM, CH9102). Motors, servos, buzzer and the IMU. ---
+#
+# One rule, not two. The old KERNEL=="ttyACM*" match claimed any CDC-ACM device
+# on the bus -- an Arduino would have been handed /dev/rrc. And the ID_MM_PORT_IGNORE
+# line carried no SUBSYSTEM anchor, so it matched the USB device rather than the
+# tty and ModemManager never saw it.
+#
+# /dev/imu is an alias for the same node, not a second device: the IMU sits on
+# this board and its samples arrive in this serial stream. See nodes/controller.md.
+#
+# Matched on VID/PID, not ATTRS{serial} (5917011644 on the bench board) -- a
+# serial match means a replacement board silently gets no symlink.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", GROUP="dialout", MODE="0660", SYMLINK+="rrc", SYMLINK+="imu", ENV{ID_MM_PORT_IGNORE}="1"
 
 # --- LD19 lidar ---
 #
