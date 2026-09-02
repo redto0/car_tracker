@@ -66,6 +66,10 @@ def generate_launch_description():
             'odom_frame': frames['odom'],
             'map_frame': frames['map'],
             'imu_frame': frames['imu'],
+            # description.launch.py already ran it; without this their
+            # odom_publisher.launch.py starts a second robot_state_publisher
+            # and joint_state_publisher on the same names.
+            'use_description': 'false',
         }.items(),
     )
 

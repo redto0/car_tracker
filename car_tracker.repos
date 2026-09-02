@@ -63,6 +63,19 @@ repositories:
     url: https://github.com/Nathan85001/imu_calib.git
     version: ros2
 
+  # Angstrong depth camera driver. Vendored: not on the ROS index.
+  ascamera:
+    type: git
+    url: git@github.com:car-tracker-robot/ascamera.git
+    version: main
+
+  # Laser odometry by scan matching. This robot has no wheel encoders, so this
+  # is ekf_odom's only real translation source. See nodes/ekf.md.
+  rf2o_laser_odometry:
+    type: git
+    url: https://github.com/MAPIRlab/rf2o_laser_odometry.git
+    version: ros2
+
   # ISC drive-mode arbitration: drive_mode_switch, inital_point_publisher.
   robot_state_controller:
     type: git
