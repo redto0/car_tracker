@@ -15,17 +15,33 @@
 
 # --- Controller board (ttyACM, CH9102). Motors, servos, buzzer and the IMU. ---
 #
-# One rule, not two. The old KERNEL=="ttyACM*" match claimed any CDC-ACM device
-# on the bus -- an Arduino would have been handed /dev/rrc. And the ID_MM_PORT_IGNORE
-# line carried no SUBSYSTEM anchor, so it matched the USB device rather than the
-# tty and ModemManager never saw it.
+# The old block was two broken rules: KERNEL=="ttyACM*" claimed any CDC-ACM
+# device on the bus, and the ID_MM_PORT_IGNORE line had no SUBSYSTEM anchor so
+# it matched the USB device rather than the tty.
 #
 # /dev/imu is an alias for the same node, not a second device: the IMU sits on
 # this board and its samples arrive in this serial stream. See nodes/controller.md.
 #
-# Matched on VID/PID, not ATTRS{serial} (5917011644 on the bench board) -- a
-# serial match means a replacement board silently gets no symlink.
+# Two rules, because neither match alone is safe on its own:
+#
+#   VID/PID alone -- 1a86:55d4 is a generic WCH CH9102, the chip in every cheap
+#   USB-TTL dongle. Plug one in and it claims /dev/rrc at equal priority with the
+#   real board; udev picks non-deterministically and the driver opens the wrong
+#   port. That failure is silent.
+#
+#   ATTRS{serial} alone -- a replacement or second board gets no symlink at all.
+#   That failure is loud (the driver cannot open /dev/rrc and says so), but it
+#   also means this tracked file has to be edited per robot.
+#
+# So: match VID/PID for the symlinks, then raise link_priority for serials we
+# know. udev gives the symlink to the highest-priority claimant, and re-points it
+# at the next one down when that device is unplugged. A known board always wins
+# over a stray dongle; an unknown board still comes up, just without precedence.
 SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", GROUP="dialout", MODE="0660", SYMLINK+="rrc", SYMLINK+="imu", ENV{ID_MM_PORT_IGNORE}="1"
+
+# Known-good controller boards, highest priority. Append one line per robot.
+# Find the serial with: udevadm info -a -n /dev/rrc | grep ATTRS{serial}
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d4", ATTRS{serial}=="5917011644", OPTIONS+="link_priority=20"
 
 # --- LD19 lidar ---
 #
