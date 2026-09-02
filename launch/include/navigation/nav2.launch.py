@@ -77,9 +77,7 @@ def generate_launch_description():
                 # already conventional, so the stack's topic surface is readable
                 # here rather than only inside nav2_bringup.
                 SetRemap(src='cmd_vel', dst='cmd_vel'),
-                # ekf_odom publishes odometry/filtered/local, not /odom.
-                # Hiwonder's EKF owned /odom and is disabled on purpose.
-                SetRemap(src='odom', dst='odometry/filtered/local'),
+                SetRemap(src='odom', dst='odom'),
                 SetRemap(src='scan', dst='scan'),
                 SetRemap(src='map', dst='map'),
                 container,

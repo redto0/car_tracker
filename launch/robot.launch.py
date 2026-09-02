@@ -53,8 +53,8 @@ def generate_launch_description():
                               description='Depth camera driver and the wire stream.'),
         DeclareLaunchArgument('use_laser_odom', default_value='true',
                               description='rf2o laser odometry. The board has no '
-                                          'encoders, so this is the EKF only real '
-                                          'translation source. Needs use_lidar.'),
+                                          'encoders, so this publishes /odom_raw and is '
+                                          'the EKF only translation source. Needs use_lidar.'),
         DeclareLaunchArgument('use_ekf', default_value='true',
                               description='robot_localization odom EKF.'),
         DeclareLaunchArgument('use_slam', default_value='true',

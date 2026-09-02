@@ -21,10 +21,13 @@ def generate_launch_description():
     with open(_WIRING) as f:
         wiring = yaml.safe_load(f)
 
-    # odom_rf2o, not odom_raw: this board has no encoders, so odom_raw is a
-    # replay of commanded velocity published with covariance 1e-9. Fusing it
-    # pinned the filter's translation to zero. See nodes/ekf.md.
-    odom_topic = wiring['topics']['odom_rf2o']
+    # /odom_raw is rf2o laser odometry, not the vendor's dead reckoning: the
+    # board has no encoders and odom_publisher runs with pub_odom_topic:=false.
+    # See nodes/ekf.md.
+    odom_topic = wiring['topics']['odom_raw']
+    # Hiwonder's EKF owned /odom and runs with enable_odom:=false, so ekf_odom
+    # publishes there. Nav2 reads it without a remap.
+    fused_topic = wiring['topics']['odom']
     imu_topic = wiring['topics']['imu']
 
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -59,12 +62,9 @@ def generate_launch_description():
         output='screen',
         parameters=[params_file, {'use_sim_time': sim_time}],
         remappings=[
-            ('odom_rf2o', odom_topic),
+            ('odom_raw', odom_topic),
             ('imu', imu_topic),
-            # robot_localization publishes its estimate on odometry/filtered by
-            # default. Split the two filters' outputs so they are separable in
-            # rviz and rosbag.
-            ('odometry/filtered', 'odometry/filtered/local'),
+            ('odometry/filtered', fused_topic),
             ('accel/filtered', 'accel/filtered/local'),
             ('set_pose', 'ekf_odom/set_pose'),
         ],
@@ -80,7 +80,7 @@ def generate_launch_description():
         condition=IfCondition(use_map_ekf),
         parameters=[params_file, {'use_sim_time': sim_time}],
         remappings=[
-            ('odom_rf2o', odom_topic),
+            ('odom_raw', odom_topic),
             ('imu', imu_topic),
             # slam_toolbox publishes its map-frame estimate on /pose.
             ('slam_pose', 'pose'),
