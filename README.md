@@ -108,6 +108,25 @@ copy shadows the apt one and the build breaks in confusing ways.
 
 The repo should now be built, and launch-able on the robot or the desktop.
 
+11. Check it actually came up. `--show-args` proves a launch file parses, not that it runs:
+
+    ```bash
+    ros2 launch car_tracker robot.launch.py use_camera:=false
+    # in another shell:
+    ros2 topic hz /scan                     # ~10 Hz
+    ros2 topic hz /imu                      # ~48 Hz raw, ~96 Hz filtered
+    ros2 topic hz /odometry/filtered/local  # 30 Hz, matches ekf.yaml
+    ros2 lifecycle get /controller_server   # active [3]
+    ```
+
+    `use_camera:=false` is required until `ascamera` exists. Do **not** reach for
+    `use_base:=false` to skip missing motors: the IMU and wheel odometry come from the same
+    launch file, so it leaves `ekf_odom` with no inputs, no `odom -> base_footprint`, and
+    Nav2 stuck `inactive` — which reads as a Nav2 bug and is not one.
+
+    Full bring-up detail, expected rates and the failure modes behind each are in
+    [deployment.md](https://github.com/redto0/car_tracker_design/blob/main/deployment.md).
+
 #### If SLAM dies on a missing libceres
 
 ```
@@ -140,8 +159,13 @@ needs no container.
 ```bash
 cp src/car_tracker/docker/env.example .env      # then set PI_IP / DESKTOP_IP
 docker compose --env-file .env -f src/car_tracker/docker/docker-compose.yml up -d --build ros
-docker compose --env-file .env -f src/car_tracker/docker/docker-compose.yml exec ros colcon build --symlink-install
+docker compose --env-file .env -f src/car_tracker/docker/docker-compose.yml exec ros bash -lc 'colcon build --symlink-install'
 ```
+
+**`bash -lc` is not optional on that last line.** `docker exec` does not run the
+ENTRYPOINT, so a bare `exec ros colcon build` starts with an empty `AMENT_PREFIX_PATH` and
+fails with `Could not find a package configuration file provided by "ament_cmake"`. Only a
+login shell sources `/etc/profile.d/car_tracker_ros.sh`.
 
 The workspace is bind-mounted, so an edit on the Pi needs a `colcon build`, not an image
 rebuild. Full detail, and the order the setup steps have to happen in, is in
@@ -187,6 +211,11 @@ ros2 launch car_tracker robot.launch.py use_camera:=false
 Flags: `use_description`, `use_base`, `use_lidar`, `use_camera`, `use_ekf`, `use_slam` and
 `use_nav` default true; `use_teleop` and `use_mission` default false.
 
+**`use_base` also gates the IMU and the wheel odometry**, not just the motors — the whole
+`controller.launch.py` sits behind it. Turning it off leaves `ekf_odom` with no inputs, so
+there is no `odom -> base_footprint` and every Nav2 lifecycle node stays `inactive` waiting
+on a transform that will never arrive. Nothing errors; it just never comes up.
+
 ### Desktop
 
 Runs rviz and, later, the perception nodes. This half is deliberately expendable — everything
@@ -195,6 +224,17 @@ safety-critical stays on the Pi, because WiFi will drop.
 ```bash
 ros2 launch car_tracker desktop.launch.py
 ```
+
+The desktop needs CycloneDDS too, not just the Pi:
+
+```bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI=file://$PWD/src/car_tracker/docker/cyclonedds.xml
+```
+
+Without both, you get the confusing half-failure: `ros2 node list` and `ros2 topic list`
+show everything the Pi publishes, while `ros2 topic hz` on those same topics returns
+nothing. Discovery is UDP and crosses vendors; data does not.
 
 Both machines need `chrony` (Pi as client of the desktop), a matching `ROS_DOMAIN_ID`, and
 CycloneDDS with explicit unicast peers. Clock skew breaks TF in ways that look exactly like
