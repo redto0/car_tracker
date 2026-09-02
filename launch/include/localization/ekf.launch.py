@@ -21,9 +21,10 @@ def generate_launch_description():
     with open(_WIRING) as f:
         wiring = yaml.safe_load(f)
 
-    # odom_raw, not odom: /odom is Hiwonder's own EKF output. Their controller
-    # is launched with enable_odom:=false so this filter owns odom -> base_footprint.
-    odom_topic = wiring['topics']['odom_raw']
+    # odom_rf2o, not odom_raw: this board has no encoders, so odom_raw is a
+    # replay of commanded velocity published with covariance 1e-9. Fusing it
+    # pinned the filter's translation to zero. See nodes/ekf.md.
+    odom_topic = wiring['topics']['odom_rf2o']
     imu_topic = wiring['topics']['imu']
 
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -58,7 +59,7 @@ def generate_launch_description():
         output='screen',
         parameters=[params_file, {'use_sim_time': sim_time}],
         remappings=[
-            ('odom_raw', odom_topic),
+            ('odom_rf2o', odom_topic),
             ('imu', imu_topic),
             # robot_localization publishes its estimate on odometry/filtered by
             # default. Split the two filters' outputs so they are separable in
@@ -79,7 +80,7 @@ def generate_launch_description():
         condition=IfCondition(use_map_ekf),
         parameters=[params_file, {'use_sim_time': sim_time}],
         remappings=[
-            ('odom_raw', odom_topic),
+            ('odom_rf2o', odom_topic),
             ('imu', imu_topic),
             # slam_toolbox publishes its map-frame estimate on /pose.
             ('slam_pose', 'pose'),

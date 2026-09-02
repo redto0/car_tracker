@@ -59,8 +59,14 @@ env:
 # two publishers of odom -> base_footprint, which TF does not reject -- it
 # interleaves them and the robot appears to vibrate through walls.
 topics:
-  odom_raw: odom_raw      # raw wheel odometry, what our ekf_odom consumes
-  odom: odom              # EKF output. Ours publishes here once theirs is off.
+  # Vendor dead reckoning from commanded velocity. No encoders exist on this
+  # board, so it is not a measurement and ekf_odom no longer consumes it.
+  odom_raw: odom_raw
+  # Hiwonder's EKF published /odom and is disabled on purpose. Ours publishes
+  # odometry/filtered/local, so /odom has no publisher by design -- consumers
+  # are pointed at the EKF output instead.
+  odom: odom
+  odom_rf2o: odom_rf2o    # rf2o laser odometry, ekf_odom's odom0
   cmd_vel: cmd_vel
   # Final filtered IMU. Chain is ros_robot_controller -> imu_calib/apply_calib
   # -> imu_corrected -> imu_complementary_filter -> imu.

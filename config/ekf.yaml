@@ -29,13 +29,19 @@ ekf_odom:
     # no jumps, safe for the controller to differentiate.
     world_frame: odom
 
-    # Wheel odometry. Mecanum, so vy is observable -- but the rollers slip
-    # laterally far more than they do longitudinally, so vy deserves a much
-    # larger covariance than vx. robot_localization takes that from the message,
-    # not from here: if the vendor driver publishes zeros or an identity block,
-    # add a republisher that injects sane values, or the filter will either
-    # trust it infinitely or produce NaNs.
-    odom0: odom_raw
+    # Laser odometry, NOT odom_raw.
+    #
+    # This board has no encoders -- the ros_robot_controller protocol has a
+    # motor COMMAND packet and no motor report, so odom_raw is a replay of what
+    # was commanded, not a measurement. Measured 2026-09-02 it publishes vx=0
+    # with covariance 1e-9, i.e. "the robot is stationary and I am certain to
+    # 0.03 mm/s". Fusing that pinned the filter's translation to zero no matter
+    # what any other sensor said, which is the "trust it infinitely" failure
+    # this comment used to warn about.
+    #
+    # rf2o scan-matches consecutive lidar frames into real planar velocity.
+    # It handles mecanum strafing, which a wheel model would not.
+    odom0: odom_rf2o
     odom0_config: [false, false, false,
                    false, false, false,
                    true,  true,  false,
@@ -89,7 +95,7 @@ ekf_map:
     # differentiate it for velocity.
     world_frame: map
 
-    odom0: odom_raw
+    odom0: odom_rf2o
     odom0_config: [false, false, false,
                    false, false, false,
                    true,  true,  false,
