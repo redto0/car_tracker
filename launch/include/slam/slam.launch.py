@@ -1,4 +1,4 @@
-"""slam_toolbox, online async. See car_tracker_design/nodes/slam.md."""
+"""slam_toolbox, async or lifelong. See car_tracker_design/nodes/slam.md."""
 
 import os
 
@@ -6,7 +6,8 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (LaunchConfiguration, PathJoinSubstitution,
+                                  PythonExpression)
 from launch_ros.actions import Node, PushRosNamespace
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
@@ -28,6 +29,7 @@ def generate_launch_description():
     params_file = LaunchConfiguration('params_file')
     mode = LaunchConfiguration('mode')
     publish_tf = LaunchConfiguration('transform_publish_period')
+    engine = LaunchConfiguration('engine')
 
     sim_time = ParameterValue(use_sim_time, value_type=bool)
 
@@ -46,15 +48,30 @@ def generate_launch_description():
             description="'mapping' to build a new map, 'localization' to "
                         'relocalize in a serialized one.'),
         DeclareLaunchArgument(
+            'engine', default_value='async',
+            description="'async' processes every scan and keeps every node. "
+                        "'lifelong' additionally prunes nodes whose scans "
+                        'duplicate a neighbour, which is what stops the pose '
+                        'graph growing without bound when the robot idles. '
+                        'lifelong needs ros-humble-slam-toolbox installed from '
+                        'apt -- the hand-placed copy in /opt ships no lifelong '
+                        'executable.'),
+        DeclareLaunchArgument(
             'transform_publish_period', default_value='0.02',
             description='Rate for the map -> odom broadcast. Set 0.0 to disable '
                         'it entirely, which is REQUIRED before enabling ekf_map '
                         'or the two fight over that transform.'),
     ]
 
+    # PythonExpression rather than two conditioned Nodes: the parameter block
+    # and remappings are identical, only the executable differs.
+    executable = PythonExpression(
+        ["'lifelong_slam_toolbox_node' if '", engine, "' == 'lifelong' "
+         "else 'async_slam_toolbox_node'"])
+
     slam = Node(
         package='slam_toolbox',
-        executable='async_slam_toolbox_node',
+        executable=executable,
         name='slam_toolbox',
         output='screen',
         parameters=[

@@ -101,3 +101,24 @@ slam_toolbox:
     use_response_expansion: true
     min_pass_through: 2
     occupancy_threshold: 0.1
+
+    # --- lifelong engine only (slam.launch.py engine:=lifelong) ---
+    #
+    # Ignored by async_slam_toolbox_node. These are what prune the pose graph
+    # while it runs: a node whose scan overlaps a neighbour by more than
+    # lifelong_iou_match, and whose score falls below
+    # lifelong_node_removal_score, is removed instead of kept forever.
+    #
+    # That is the setting that matters for this robot, which spends most of its
+    # time stationary with minimum_travel_distance at 0.0 -- without pruning,
+    # every idle second adds two more near-identical nodes.
+    #
+    # Values are upstream's shipped defaults from mapper_params_lifelong.yaml.
+    lifelong_search_use_tree: false
+    lifelong_minimum_score: 0.1
+    lifelong_iou_match: 0.85
+    lifelong_node_removal_score: 0.04
+    lifelong_overlap_score_scale: 0.06
+    lifelong_constraint_multiplier: 0.08
+    lifelong_nearby_penalty: 0.001
+    lifelong_candidates_scale: 0.03

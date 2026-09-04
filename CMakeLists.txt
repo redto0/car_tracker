@@ -16,7 +16,7 @@ install(
 
 # chain_check.py -- live health of the SLAM chain, link by link.
 install(
-        PROGRAMS scripts/chain_check.py
+        PROGRAMS scripts/chain_check.py scripts/dynamic_probe.py
         DESTINATION lib/${PROJECT_NAME}
 )
 
