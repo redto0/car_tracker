@@ -59,6 +59,11 @@ def generate_launch_description():
                               description='robot_localization odom EKF.'),
         DeclareLaunchArgument('use_slam', default_value='true',
                               description='slam_toolbox.'),
+        DeclareLaunchArgument('slam_engine', default_value='async',
+                              description="slam_toolbox engine: 'async' keeps "
+                                          "every node, 'lifelong' prunes "
+                                          'redundant ones as it runs. lifelong '
+                                          'needs ros-humble-slam-toolbox from apt.'),
         DeclareLaunchArgument('use_nav', default_value='true',
                               description='Nav2.'),
         DeclareLaunchArgument('use_teleop', default_value='false',
@@ -87,7 +92,8 @@ def generate_launch_description():
                 _include('localization', 'ekf.launch.py',
                          IfCondition(LaunchConfiguration('use_ekf'))),
                 _include('slam', 'slam.launch.py',
-                         IfCondition(LaunchConfiguration('use_slam'))),
+                         IfCondition(LaunchConfiguration('use_slam')),
+                         {'engine': LaunchConfiguration('slam_engine')}),
                 _include('teleop', 'teleop.launch.py',
                          IfCondition(LaunchConfiguration('use_teleop'))),
                 _include('navigation', 'nav2.launch.py',
