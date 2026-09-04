@@ -40,7 +40,7 @@ slam_toolbox:
     debug_logging: false
     throttle_scans: 1
     transform_publish_period: 0.02 #if 0 never publishes odometry
-    map_update_interval: 5.0
+    map_update_interval: 1.0
     resolution: 0.05
     min_laser_range: 0.0 #for rastering images
     max_laser_range: 12.0  #for rastering images -- STL-19P is ~12 m
@@ -53,8 +53,21 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.2
-    minimum_travel_heading: 0.2
+    # Both zero: process every scan minimum_time_interval allows, rather than
+    # only after the robot has travelled.
+    #
+    # These gate shouldProcessScan() on ODOMETRY travel. At 0.2 they are wrong
+    # for this robot in two ways. Heading never trips at all -- yaw comes from
+    # the IMU, which is stable at rest, so the robot can sit still indefinitely.
+    # And translation comes from rf2o, whose drift at rest was measured at
+    # 1.5 cm/min on 2026-09-04, so 0.2 m takes about 13 minutes of standing
+    # still to reach. The result was a map that published one frame at startup
+    # and then republished that identical frame forever.
+    #
+    # minimum_time_interval: 0.5 remains the real rate limit, so this costs at
+    # most 2 scans/second rather than the full 10 Hz.
+    minimum_travel_distance: 0.0
+    minimum_travel_heading: 0.0
     scan_buffer_size: 10
     scan_buffer_maximum_scan_distance: 10.0
     link_match_minimum_response_fine: 0.1  
