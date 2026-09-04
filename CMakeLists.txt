@@ -14,6 +14,12 @@ install(
         DESTINATION share/${PROJECT_NAME}/
 )
 
+# chain_check.py -- live health of the SLAM chain, link by link.
+install(
+        PROGRAMS scripts/chain_check.py
+        DESTINATION lib/${PROJECT_NAME}
+)
+
 if (BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
