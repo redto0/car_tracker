@@ -38,8 +38,13 @@ ekf_odom:
     # pinned this filter's translation to zero no matter what any other sensor
     # said. It now runs with pub_odom_topic:=false and rf2o owns the name.
     #
-    # rf2o scan-matches consecutive lidar frames into real planar velocity and
-    # handles mecanum strafing, which a wheel model would not.
+    # rf2o scan-matches consecutive lidar frames into real planar velocity.
+    #
+    # KNOWN DEFECT: rf2o hardcodes twist.linear.y = 0.0 and publishes an all-zero
+    # covariance, which robot_localization replaces with 1e-9. Fusing vy here is
+    # therefore an infinitely confident "no lateral motion" on a holonomic base --
+    # the same failure odom_raw caused. Fix is to fuse pose x/y with
+    # odom0_differential: true and publish rf2o's own cov_odo. See nodes/ekf.md.
     odom0: odom_raw
     odom0_config: [false, false, false,
                    false, false, false,
