@@ -33,7 +33,7 @@ CHAIN = [
     ('/odom',      Odometry,  'default', 30.0, 'ekf_odom        fused estimate'),
     ('/map',       OccupancyGrid, 'latched', None, 'slam_toolbox    map (only on movement)'),
     ('/pose',      PoseWithCovarianceStamped, 'default', None, 'slam_toolbox    map-frame pose'),
-    ('/ros_robot_controller/battery', UInt16, 'default', 1.0, 'ros_robot_ctl   pack voltage'),
+    ('/ros_robot_controller/battery', UInt16, 'default', None, 'ros_robot_ctl   pack voltage (not a chain link)'),
 ]
 
 QOS = {
@@ -90,7 +90,7 @@ def render(node, window):
             shown = f"{hz:6.2f}" if hz else "     -"
             exp = f"~{want:g} Hz"
             colour = C_OK if ok else C_BAD
-            if not ok:
+            if not ok and 'not a chain link' not in who:
                 broken.append((topic, who))
         out.append(f"{colour}{topic:32s} {shown} Hz  {exp:9s} {who}{C_OFF}")
 
