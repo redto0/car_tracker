@@ -10,30 +10,39 @@ from launch_ros.substitutions import FindPackageShare
 _PKG = 'car_tracker'
 
 
+def _subsystem(subdir, filename, launch_arguments, condition=None):
+    """One file from launch/include/, wrapped in its own scope.
+
+    Same helper and same reason as robot.launch.py: scoped=True stops
+    params_file leaking between includes. Kept here so the two top-level files
+    read alike even though this one currently has a single entry.
+    """
+    return GroupAction(
+        [
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    PathJoinSubstitution(
+                        [FindPackageShare(_PKG), 'launch', 'include', subdir, filename])),
+                launch_arguments=launch_arguments.items(),
+            )
+        ],
+        scoped=True,
+        condition=condition,
+    )
+
+
 def generate_launch_description():
+    # Launch arguments
     use_sim_time = LaunchConfiguration('use_sim_time')
     namespace = LaunchConfiguration('namespace')
+    use_rviz = LaunchConfiguration('use_rviz')
 
-    args = [
-        DeclareLaunchArgument(
-            'use_sim_time', default_value='false',
-            description='Use /clock instead of wall time. False against a real robot.'),
-        DeclareLaunchArgument(
-            'namespace', default_value='',
-            description='Namespace the robot is running under. Must match the Pi.'),
-        DeclareLaunchArgument('use_rviz', default_value='true',
-                              description='Launch RViz.'),
-    ]
+    common = {'use_sim_time': use_sim_time, 'namespace': namespace}
 
-    rviz = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution(
-                [FindPackageShare(_PKG), 'launch', 'include', 'rviz', 'rviz.launch.py'])),
-        launch_arguments={
-            'use_sim_time': use_sim_time,
-            'use_rviz': LaunchConfiguration('use_rviz'),
-        }.items(),
-        condition=IfCondition(LaunchConfiguration('use_rviz')),
+    rviz = _subsystem(
+        'rviz', 'rviz.launch.py',
+        {**common, 'use_rviz': use_rviz},
+        condition=IfCondition(use_rviz),
     )
 
     # TODO: perception nodes go here once they exist --
@@ -43,4 +52,18 @@ def generate_launch_description():
     # publish a map-frame grid the Pi's costmap layer consumes. See
     # car_tracker_design/architecture.md.
 
-    return LaunchDescription(args + [GroupAction([rviz])])
+    return LaunchDescription([
+        # Launch arguments
+        DeclareLaunchArgument(
+            'use_sim_time', default_value='false',
+            description='Use /clock instead of wall time. False against a real robot.'),
+        DeclareLaunchArgument(
+            'namespace', default_value='',
+            description='Namespace the robot is running under. Must match the Pi.'),
+        DeclareLaunchArgument(
+            'use_rviz', default_value='true',
+            description='Launch RViz.'),
+
+        # Subsystems
+        rviz,
+    ])
