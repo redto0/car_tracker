@@ -17,6 +17,16 @@
        absolute trajectory error should be ~0 and any drift is a bug rather than
        a tolerance. Raise ONE of these at a time; ramping several together tells
        you nothing about which one broke it. -->
+  <!-- The camera is OFF by default and that is a performance decision, not a
+       preference. gzserver renders camera sensors even headless, falls back to
+       software rasterization without a GL context, and drops the real-time
+       factor from ~1.0 to 0.15 on this machine. Terrain classification is not
+       validated in simulation anyway (OGRE 1.x cannot render carpet
+       convincingly), so the camera buys nothing here it is worth paying a 6x
+       slowdown for. Turn it on with sim_camera:=true when testing the vision
+       plumbing specifically. -->
+  <xacro:arg name="sim_camera" default="false"/>
+
   <xacro:property name="lidar_noise_stddev" value="0.0"/>
   <xacro:property name="imu_gyro_noise"     value="0.0"/>
   <xacro:property name="imu_accel_noise"    value="0.0"/>
@@ -161,31 +171,38 @@
        OGRE 1.x and a carpet texture in it looks nothing like real carpet. See
        sim_integration.md.
   -->
-  <gazebo reference="depth_cam">
-    <sensor name="camera" type="camera">
-      <always_on>true</always_on>
-      <update_rate>15</update_rate>
-      <camera name="color">
-        <horizontal_fov>1.204</horizontal_fov>
-        <image>
-          <width>640</width>
-          <height>480</height>
-          <format>R8G8B8</format>
-        </image>
-        <clip>
-          <near>0.05</near>
-          <far>20.0</far>
-        </clip>
-      </camera>
-      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-        <ros>
-          <remapping>~/image_raw:=camera/color/image_raw</remapping>
-          <remapping>~/camera_info:=camera/color/camera_info</remapping>
-        </ros>
-        <frame_name>depth_cam</frame_name>
-      </plugin>
-    </sensor>
-  </gazebo>
+  <xacro:if value="$(arg sim_camera)">
+    <gazebo reference="depth_cam">
+      <sensor name="camera" type="camera">
+        <always_on>true</always_on>
+        <update_rate>15</update_rate>
+        <camera name="color">
+          <horizontal_fov>1.204</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>20.0</far>
+          </clip>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <!-- namespace + camera_name, NOT remapping. Remapping image topics is
+               broken upstream (image_common#93) and the shipped gazebo_plugins
+               demo world says so in a TODO. Placing them this way yields
+               /camera/color/image_raw and /camera/color/camera_info, which is
+               what camera_wiring.yaml expects. -->
+          <ros>
+            <namespace>/camera</namespace>
+          </ros>
+          <camera_name>color</camera_name>
+          <frame_name>depth_cam</frame_name>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:if>
 
   <!-- Wheels are visual only under planar_move: the plugin moves the body
        kinematically and never touches the wheel joints, so friction here has no

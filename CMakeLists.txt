@@ -23,6 +23,13 @@ install(
 if (BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
+
+    # The URDF contract: the frames the wiring names must exist, the meshes must
+    # resolve, and the simulation description must decorate the robot without
+    # changing its kinematics. Hardware-free, so it runs anywhere.
+    find_package(ament_cmake_pytest REQUIRED)
+    ament_add_pytest_test(test_urdf_contract test/test_urdf_contract.py
+            TIMEOUT 120)
 endif ()
 
 ament_package()
