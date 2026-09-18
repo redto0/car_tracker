@@ -1,0 +1,255 @@
+<?xml version="1.0"?>
+<!--
+  Apartment test world, 10.7 x 4.6 m. See car_tracker_design/sim_integration.md.
+
+  Three properties are deliberate:
+    * the hallway is a scan-matching degeneracy trap, where rf2o's covariance
+      becomes unconstrained along the corridor axis. Exercise the weakness
+      rather than design around it.
+    * the living/bedroom doorway creates a CYCLE. Rooms hanging off a hallway
+      form a tree, so loop closure would never fire and do_loop_closing would
+      never be tested.
+    * doorways are 0.85 m, narrow enough to exercise Nav2 footprint clearance
+      against robot_radius 0.16.
+
+  Carpet rectangles are VISUAL ONLY. planar_move is kinematic and ignores
+  friction, so they cannot affect motion; they exist as ground truth for the
+  Phase 2 fake classifier and as regions for injected odometry noise.
+-->
+<sdf version="1.6">
+  <world name="apartment">
+    <include><uri>model://sun</uri></include>
+    <include><uri>model://ground_plane</uri></include>
+
+    <physics name="default" type="ode">
+      <max_step_size>0.004</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>250</real_time_update_rate>
+    </physics>
+
+    <model name="wall_00">
+      <static>true</static>
+      <pose>5.350 0.000 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>10.700 0.100 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>10.700 0.100 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_01">
+      <static>true</static>
+      <pose>5.350 4.600 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>10.700 0.100 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>10.700 0.100 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_02">
+      <static>true</static>
+      <pose>0.000 2.300 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.100 4.600 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.100 4.600 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_03">
+      <static>true</static>
+      <pose>10.700 2.300 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.100 4.600 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.100 4.600 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_04">
+      <static>true</static>
+      <pose>0.912 1.200 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.825 0.100 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.825 0.100 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_05">
+      <static>true</static>
+      <pose>4.250 1.200 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>3.150 0.100 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>3.150 0.100 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_06">
+      <static>true</static>
+      <pose>7.800 1.200 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>2.250 0.100 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>2.250 0.100 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_07">
+      <static>true</static>
+      <pose>10.238 1.200 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.925 0.100 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.925 0.100 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_08">
+      <static>true</static>
+      <pose>4.500 1.837 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.100 1.275 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.100 1.275 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_09">
+      <static>true</static>
+      <pose>4.500 3.962 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.100 1.275 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.100 1.275 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="wall_10">
+      <static>true</static>
+      <pose>8.000 2.900 0.600 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.100 3.400 1.200</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.100 3.400 1.200</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="carpet_living">
+      <static>true</static>
+      <pose>2.250 2.900 0.005 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>2.600 2.600 0.010</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>2.600 2.600 0.010</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Purple</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="carpet_bedroom">
+      <static>true</static>
+      <pose>6.250 2.900 0.005 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>2.400 2.400 0.010</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>2.400 2.400 0.010</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Purple</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="sofa">
+      <static>true</static>
+      <pose>0.600 3.900 0.250 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.700 1.600 0.500</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.700 1.600 0.500</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Wood</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="bed">
+      <static>true</static>
+      <pose>7.550 3.600 0.225 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.800 1.800 0.450</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.800 1.800 0.450</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Wood</name></script></material>
+        </visual>
+      </link>
+    </model>
+    <model name="island">
+      <static>true</static>
+      <pose>9.400 3.900 0.450 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.300 0.700 0.900</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.300 0.700 0.900</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Wood</name></script></material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

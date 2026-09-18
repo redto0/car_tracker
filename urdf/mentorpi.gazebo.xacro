@@ -1,0 +1,205 @@
+<?xml version="1.0"?>
+<!--
+  Gazebo Classic tags for the MentorPi. See car_tracker_design/sim_integration.md.
+
+  Deliberately NOT in mentorpi_description: that package is a vendor fork and
+  stays as close to upstream as possible. Everything simulator-specific lives in
+  this one file, which is also what makes a later migration to Fortress or
+  Harmonic cheap — the stack itself is simulator-agnostic.
+
+  Every topic name here comes from config/robot_wiring.yaml and
+  config/camera_wiring.yaml, not from plugin defaults. The simulator must speak
+  the same names as the hardware or none of this tests anything.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Noise, for the validation ladder. Zero is stage 1: with perfect data,
+       absolute trajectory error should be ~0 and any drift is a bug rather than
+       a tolerance. Raise ONE of these at a time; ramping several together tells
+       you nothing about which one broke it. -->
+  <xacro:property name="lidar_noise_stddev" value="0.0"/>
+  <xacro:property name="imu_gyro_noise"     value="0.0"/>
+  <xacro:property name="imu_accel_noise"    value="0.0"/>
+
+  <!-- ==================================================================
+       Drive: planar_move
+       ==================================================================
+       Holonomic by construction — it applies the commanded twist to the body
+       directly. Mecanum rollers are deliberately NOT modelled: that is a
+       physics-engine fight that teaches nothing about the navigation stack.
+
+       publish_odom and publish_odom_tf are BOTH false, and that is the whole
+       point. ekf_odom owns odom -> base_footprint. Two broadcasters on one edge
+       make TF alternate between them and the robot jitters.
+
+       This is the third time this exact failure has appeared in this project:
+       Hiwonder's enable_odom EKF was the first, rf2o's publish_tf default the
+       second. Anything that can produce odometry defaults to broadcasting it.
+  -->
+  <gazebo>
+    <plugin name="planar_move" filename="libgazebo_ros_planar_move.so">
+      <ros>
+        <remapping>cmd_vel:=cmd_vel</remapping>
+      </ros>
+
+      <update_rate>100</update_rate>
+      <publish_rate>50</publish_rate>
+
+      <publish_odom>false</publish_odom>
+      <publish_odom_tf>false</publish_odom_tf>
+
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+    </plugin>
+  </gazebo>
+
+  <!-- ==================================================================
+       Ground truth, for measurement only
+       ==================================================================
+       Published in the world frame on /sim/ground_truth. NOTHING subscribes to
+       this except test tooling, and nothing ever should: feeding it into the
+       pipeline would bypass rf2o, which is the component most in need of
+       testing. It exists so absolute trajectory error can be measured.
+  -->
+  <gazebo>
+    <plugin name="ground_truth" filename="libgazebo_ros_p3d.so">
+      <ros>
+        <remapping>odom:=sim/ground_truth</remapping>
+      </ros>
+      <body_name>base_footprint</body_name>
+      <frame_name>world</frame_name>
+      <update_rate>30</update_rate>
+      <gaussian_noise>0.0</gaussian_noise>
+    </plugin>
+  </gazebo>
+
+  <!-- ==================================================================
+       Lidar -> /scan
+       ==================================================================
+       455 samples over a full revolution approximates the LD19's typical count
+       at 10 Hz. Note this is a FIXED count every scan, which the real LD19 is
+       not: its driver recomputes angle_increment per revolution, so beam index
+       maps to a different bearing each time. Index-space code passes here and
+       misbehaves on hardware. See sim_integration.md.
+  -->
+  <gazebo reference="lidar_frame">
+    <sensor name="lidar" type="ray">
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>455</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.02</min>
+          <max>12.0</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>${lidar_noise_stddev}</stddev>
+        </noise>
+      </ray>
+      <plugin name="lidar_controller" filename="libgazebo_ros_ray_sensor.so">
+        <ros>
+          <remapping>~/out:=scan</remapping>
+        </ros>
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>lidar_frame</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- ==================================================================
+       IMU -> /ros_robot_controller/imu_raw
+       ==================================================================
+       The RAW topic, not /imu. imu_calib and imu_filter then run exactly as
+       they do on hardware, so the whole chain is under test rather than
+       short-circuited. 50 Hz matches the board's measured ~48 Hz.
+  -->
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>50</update_rate>
+      <imu>
+        <angular_velocity>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>${imu_gyro_noise}</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>${imu_gyro_noise}</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>${imu_gyro_noise}</stddev></noise></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>${imu_accel_noise}</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>${imu_accel_noise}</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>${imu_accel_noise}</stddev></noise></z>
+        </linear_acceleration>
+      </imu>
+      <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+        <ros>
+          <remapping>~/out:=ros_robot_controller/imu_raw</remapping>
+        </ros>
+        <frame_name>imu_link</frame_name>
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- ==================================================================
+       Camera -> /camera/color/...
+       ==================================================================
+       Colour only. The real bench camera is a NOVATEK UVC device with no depth
+       stream, so a colour-only sim camera is the honest match; the ascamera
+       driver targets an Orbbec depth unit that is not on this robot.
+
+       Terrain classification is NOT validated here — Classic renders through
+       OGRE 1.x and a carpet texture in it looks nothing like real carpet. See
+       sim_integration.md.
+  -->
+  <gazebo reference="depth_cam">
+    <sensor name="camera" type="camera">
+      <always_on>true</always_on>
+      <update_rate>15</update_rate>
+      <camera name="color">
+        <horizontal_fov>1.204</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>20.0</far>
+        </clip>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <ros>
+          <remapping>~/image_raw:=camera/color/image_raw</remapping>
+          <remapping>~/camera_info:=camera/color/camera_info</remapping>
+        </ros>
+        <frame_name>depth_cam</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Wheels are visual only under planar_move: the plugin moves the body
+       kinematically and never touches the wheel joints, so friction here has no
+       effect on motion. Set low so the wheels cannot fight the plugin if a
+       future drive model does use them. -->
+  <xacro:macro name="wheel_surface" params="link">
+    <gazebo reference="${link}">
+      <mu1>0.1</mu1>
+      <mu2>0.1</mu2>
+    </gazebo>
+  </xacro:macro>
+  <xacro:wheel_surface link="wheel_lf_Link"/>
+  <xacro:wheel_surface link="wheel_lb_Link"/>
+  <xacro:wheel_surface link="wheel_rf_Link"/>
+  <xacro:wheel_surface link="wheel_rb_Link"/>
+
+</robot>

@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 # from the installed share directory, so without symlinks you would be editing
 # a stale copy.
 install(
-        DIRECTORY launch config
+        DIRECTORY launch config urdf worlds
         DESTINATION share/${PROJECT_NAME}/
 )
 

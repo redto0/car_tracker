@@ -60,6 +60,18 @@
     <exec_depend>slam_toolbox</exec_depend>
     <exec_depend>nav2_bringup</exec_depend>
 
+    <!--Simulation. gazebo_ros supplies spawn_entity.py and the world plugins;
+        gazebo_plugins supplies the libgazebo_ros_* sensors and planar_move.
+        Declared separately rather than via the gazebo_ros_pkgs metapackage so
+        it is obvious which half each plugin comes from. gazebo is the
+        simulator itself: normally pulled in transitively, but on this machine
+        gazebo_ros was hand-placed into /opt/ros/humble outside dpkg, so apt
+        never resolved its dependencies and gzserver is absent. Declare it.
+        See car_tracker_design/sim_integration.md.-->
+    <exec_depend>gazebo</exec_depend>
+    <exec_depend>gazebo_ros</exec_depend>
+    <exec_depend>gazebo_plugins</exec_depend>
+
     <test_depend>ament_lint_auto</test_depend>
     <test_depend>ament_cmake_xmllint</test_depend>
 
