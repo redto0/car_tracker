@@ -15,8 +15,8 @@ from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, ExecuteProcess, GroupAction,
                             SetEnvironmentVariable)
 from launch.conditions import IfCondition
-from launch.substitutions import (Command, LaunchConfiguration,
-                                  PathJoinSubstitution)
+from launch.substitutions import (Command, EnvironmentVariable,
+                                  LaunchConfiguration, PathJoinSubstitution)
 from launch_ros.actions import Node, PushRosNamespace
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
@@ -36,10 +36,25 @@ def generate_launch_description():
     # as it does on the robot. Set here so the sim never depends on the shell.
     machine_type = SetEnvironmentVariable('MACHINE_TYPE', 'MentorPi_Mecanum')
 
+    # The URDF references meshes as model://mentorpi_description/meshes/...,
+    # which Gazebo resolves against GAZEBO_MODEL_PATH, not the ament index.
+    # Without this every mesh fails to load, the robot spawns with no geometry
+    # at all, and Gazebo then goes looking for the model on the internet.
+    model_path = SetEnvironmentVariable(
+        'GAZEBO_MODEL_PATH',
+        [PathJoinSubstitution([FindPackageShare('mentorpi_description'), '..']),
+         ':', EnvironmentVariable('GAZEBO_MODEL_PATH', default_value='')])
+
+    # Never reach for the online model database. The world uses only sun and
+    # ground_plane, both shipped locally, and a lookup on a slow link stalls
+    # startup for no benefit.
+    no_online_models = SetEnvironmentVariable('GAZEBO_MODEL_DATABASE_URI', '')
+
     robot_description = ParameterValue(
         Command([
             'xacro ',
             PathJoinSubstitution([FindPackageShare(_PKG), 'urdf', 'mentorpi_sim.xacro']),
+            ' sim_camera:=', LaunchConfiguration('sim_camera'),
         ]),
         value_type=str,
     )
@@ -100,6 +115,12 @@ def generate_launch_description():
             description='Run gzclient. False by default: headless is what '
                         'regression runs want, and the GUI is the expensive half.'),
         DeclareLaunchArgument(
+            'sim_camera', default_value='false',
+            description='Simulate the camera. OFF by default: gzserver renders '
+                        'it even headless and it costs ~6x real-time factor. '
+                        'Perception is not validated in sim, see '
+                        'car_tracker_design/sim_integration.md.'),
+        DeclareLaunchArgument(
             'x', default_value='1.0',
             description='Spawn x. Default puts the robot in the hallway.'),
         DeclareLaunchArgument(
@@ -110,6 +131,8 @@ def generate_launch_description():
             description='Spawn yaw, radians. 0 faces along the hallway.'),
 
         machine_type,
+        model_path,
+        no_online_models,
 
         # Subsystems
         GroupAction([
