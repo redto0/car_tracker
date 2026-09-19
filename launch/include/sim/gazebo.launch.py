@@ -74,9 +74,9 @@ def generate_launch_description():
                 [FindPackageShare(_PKG), 'worlds', 'apartment.world']),
             description='World file. Defaults to the 10.7 x 4.6 m apartment.'),
         DeclareLaunchArgument(
-            'use_gui', default_value='false',
-            description='Run gzclient. False by default: headless is what '
-                        'regression runs want, and the GUI is the expensive half.'),
+            'use_gui', default_value='true',
+            description='Run gzclient. Interactive default; regression runs '
+                        'pass use_gui:=false.'),
         DeclareLaunchArgument(
             'x', default_value='1.0', description='Spawn x, default the hallway.'),
         DeclareLaunchArgument(
