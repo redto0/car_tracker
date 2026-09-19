@@ -51,14 +51,26 @@
     <exec_depend>libceres-dev</exec_depend>
     <exec_depend>graphicsmagick</exec_depend>
 
-    <!--Our nodes-->
+    <!--Our nodes, and the vendored drivers from car_tracker.repos. These have
+        no rosdep rule and never will: they are workspace packages, so rosdep
+        reports them unresolvable and the ignore-src flag is what skips them.
+        Declared anyway, because the dependency is real and package.xml is
+        where it is looked for.-->
     <exec_depend>car_tracker_path_resolver</exec_depend>
+    <exec_depend>ascamera</exec_depend>
+    <exec_depend>rf2o_laser_odometry</exec_depend>
 
     <!--Localization, SLAM and nav, all from apt-->
     <exec_depend>robot_localization</exec_depend>
     <exec_depend>robot_state_publisher</exec_depend>
     <exec_depend>slam_toolbox</exec_depend>
     <exec_depend>nav2_bringup</exec_depend>
+
+    <!--xacro is invoked as a command by the description launch files, so
+        nothing imports it and no static check would find it. teleop_twist_keyboard
+        is how the robot is driven in simulation, where there is no gamepad.-->
+    <exec_depend>xacro</exec_depend>
+    <exec_depend>teleop_twist_keyboard</exec_depend>
 
     <!--Simulation. gazebo_ros supplies spawn_entity.py and the world plugins;
         gazebo_plugins supplies the libgazebo_ros_* sensors and planar_move.

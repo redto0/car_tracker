@@ -51,6 +51,7 @@ def generate_launch_description():
     slam_engine = LaunchConfiguration('slam_engine')
     sim_camera = LaunchConfiguration('sim_camera')
 
+    use_rviz = LaunchConfiguration('use_rviz')
     use_slam = LaunchConfiguration('use_slam')
     use_nav = LaunchConfiguration('use_nav')
     use_teleop = LaunchConfiguration('use_teleop')
@@ -101,6 +102,16 @@ def generate_launch_description():
         condition=IfCondition(use_mission),
     )
 
+    # RViz belongs here rather than in desktop.launch.py for the simulated
+    # robot: use_sim_time has to be true or every TF lookup fails against a
+    # clock RViz is not on, and that is not a flag worth making someone
+    # remember. desktop.launch.py stays the way to attach to the real robot.
+    rviz = _subsystem(
+        'rviz', 'rviz.launch.py',
+        {**common, 'use_rviz': use_rviz},
+        condition=IfCondition(use_rviz),
+    )
+
     return LaunchDescription([
         # Launch arguments
         DeclareLaunchArgument(
@@ -129,6 +140,9 @@ def generate_launch_description():
                               description='Spawn y, default mid-hallway.'),
         DeclareLaunchArgument('yaw', default_value='0.0',
                               description='Spawn yaw in radians.'),
+        DeclareLaunchArgument(
+            'use_rviz', default_value='true',
+            description='Launch RViz, on sim time, with the top-down map view.'),
         DeclareLaunchArgument(
             'use_slam', default_value='true', description='slam_toolbox.'),
         DeclareLaunchArgument(
@@ -161,4 +175,5 @@ def generate_launch_description():
         teleop,
         nav2,
         mission,
+        rviz,
     ])
