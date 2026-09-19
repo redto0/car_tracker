@@ -112,9 +112,12 @@ def generate_launch_description():
                 [FindPackageShare(_PKG), 'worlds', 'apartment.world']),
             description='World file. Defaults to the 10.7 x 4.6 m apartment.'),
         DeclareLaunchArgument(
-            'use_gui', default_value='false',
-            description='Run gzclient. False by default: the GUI is the '
-                        'expensive half and headless is what regression wants.'),
+            'use_gui', default_value='true',
+            description='Run gzclient. TRUE by default: a person launching this '
+                        'interactively wants to see the robot, and having to '
+                        'remember a flag for the common case is the thing this '
+                        'launch file exists to avoid. Regression runs pass '
+                        'use_gui:=false explicitly -- they are written once.'),
         DeclareLaunchArgument(
             'sim_camera', default_value='false',
             description='Simulate the camera. OFF by default: gzserver renders '
