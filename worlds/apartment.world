@@ -18,6 +18,15 @@
 -->
 <sdf version="1.6">
   <world name="apartment">
+    <!-- Open looking straight down at the whole apartment. Centre is
+         (10.7/2, 4.6/2); 12 m up clears the 10.7 m long axis at the default
+         FOV. pitch 1.5708 is straight down. -->
+    <gui fullscreen="0">
+      <camera name="top_down">
+        <pose>5.35 2.30 12.0 0 1.5708 0</pose>
+      </camera>
+    </gui>
+
     <include><uri>model://sun</uri></include>
     <include><uri>model://ground_plane</uri></include>
 

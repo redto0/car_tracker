@@ -49,6 +49,19 @@ if (BUILD_TESTING)
                     --junit-xml=${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_urdf_contract.xunit.xml
             TIMEOUT 120
             GENERATE_RESULT_FOR_RETURN_CODE_ZERO)
+
+    # Every package the launch tree uses must be declared as a rosdep. Drift
+    # here is invisible: it works on the machine where someone already
+    # installed the thing, and fails on a fresh clone.
+    ament_add_test(test_dependency_contract
+            COMMAND ${CMAKE_COMMAND} -E env
+                    PYTHONNOUSERSITE=1
+                    python3 -m pytest
+                    ${CMAKE_CURRENT_SOURCE_DIR}/test/test_dependency_contract.py
+                    -v
+                    --junit-xml=${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/test_dependency_contract.xunit.xml
+            TIMEOUT 60
+            GENERATE_RESULT_FOR_RETURN_CODE_ZERO)
 endif ()
 
 ament_package()

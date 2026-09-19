@@ -152,19 +152,38 @@ Visualization Manager:
       Class: rviz_default_plugins/TF
   Value: true
   Views:
+    # TopDownOrtho, not Orbit: a map is read from above, and an orthographic
+    # projection keeps scale constant across the view so distances on screen
+    # mean the same thing everywhere. Orbit at a near-vertical pitch also sits
+    # right next to gimbal lock.
+    #
+    # X/Y are the focal point in the FIXED frame, which is map -- and the map
+    # origin is wherever the robot started, not the world origin. 0,0 therefore
+    # follows the robot's start pose rather than the apartment's corner.
     Current:
-      Class: rviz_default_plugins/Orbit
-      Distance: 10
-      Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+      Class: rviz_default_plugins/TopDownOrtho
       Name: Current View
-      Pitch: 0.785
       Target Frame: <Fixed Frame>
-      Value: Orbit (rviz)
-      Yaw: 0.785
-    Saved: ~
+      Value: TopDownOrtho (rviz_default_plugins)
+      # Pixels per metre. 60 puts roughly 12 m across a 1400 px window, which
+      # covers the 10.7 m apartment with margin.
+      Scale: 60
+      Angle: 0
+      X: 0
+      Y: 0
+    Saved:
+      # Kept for inspecting the robot model and TF axes, which read badly flat on.
+      - Class: rviz_default_plugins/Orbit
+        Distance: 6
+        Focal Point:
+          X: 0
+          Y: 0
+          Z: 0
+        Name: Orbit
+        Pitch: 0.785
+        Target Frame: <Fixed Frame>
+        Value: Orbit (rviz)
+        Yaw: 0.785
 Window Geometry:
   Displays:
     collapsed: false
