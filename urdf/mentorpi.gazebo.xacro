@@ -27,6 +27,24 @@
        plumbing specifically. -->
   <xacro:arg name="sim_camera" default="false"/>
 
+  <!-- Topic and frame names are passed IN, not hardcoded here. They come from
+       config/robot_wiring.yaml via include/sim/description.launch.py, so the
+       simulated robot's topic surface is readable from a launch file like every
+       other subsystem's, rather than buried in XML. Defaults match the wiring
+       so the file still expands standalone for xacro and the contract tests. -->
+  <xacro:arg name="cmd_vel_topic"     default="cmd_vel"/>
+  <xacro:arg name="scan_topic"        default="scan"/>
+  <xacro:arg name="imu_raw_topic"     default="ros_robot_controller/imu_raw"/>
+  <xacro:arg name="ground_truth_topic" default="sim/ground_truth"/>
+  <xacro:arg name="camera_namespace"  default="/camera"/>
+  <xacro:arg name="camera_name"       default="color"/>
+
+  <xacro:arg name="base_frame"   default="base_footprint"/>
+  <xacro:arg name="odom_frame"   default="odom"/>
+  <xacro:arg name="lidar_frame"  default="lidar_frame"/>
+  <xacro:arg name="imu_frame"    default="imu_link"/>
+  <xacro:arg name="camera_frame" default="depth_cam"/>
+
   <xacro:property name="lidar_noise_stddev" value="0.0"/>
   <xacro:property name="imu_gyro_noise"     value="0.0"/>
   <xacro:property name="imu_accel_noise"    value="0.0"/>
@@ -49,7 +67,7 @@
   <gazebo>
     <plugin name="planar_move" filename="libgazebo_ros_planar_move.so">
       <ros>
-        <remapping>cmd_vel:=cmd_vel</remapping>
+        <remapping>cmd_vel:=$(arg cmd_vel_topic)</remapping>
       </ros>
 
       <update_rate>100</update_rate>
@@ -58,8 +76,8 @@
       <publish_odom>false</publish_odom>
       <publish_odom_tf>false</publish_odom_tf>
 
-      <odometry_frame>odom</odometry_frame>
-      <robot_base_frame>base_footprint</robot_base_frame>
+      <odometry_frame>$(arg odom_frame)</odometry_frame>
+      <robot_base_frame>$(arg base_frame)</robot_base_frame>
     </plugin>
   </gazebo>
 
@@ -74,9 +92,9 @@
   <gazebo>
     <plugin name="ground_truth" filename="libgazebo_ros_p3d.so">
       <ros>
-        <remapping>odom:=sim/ground_truth</remapping>
+        <remapping>odom:=$(arg ground_truth_topic)</remapping>
       </ros>
-      <body_name>base_footprint</body_name>
+      <body_name>$(arg base_frame)</body_name>
       <frame_name>world</frame_name>
       <update_rate>30</update_rate>
       <gaussian_noise>0.0</gaussian_noise>
@@ -119,10 +137,10 @@
       </ray>
       <plugin name="lidar_controller" filename="libgazebo_ros_ray_sensor.so">
         <ros>
-          <remapping>~/out:=scan</remapping>
+          <remapping>~/out:=$(arg scan_topic)</remapping>
         </ros>
         <output_type>sensor_msgs/LaserScan</output_type>
-        <frame_name>lidar_frame</frame_name>
+        <frame_name>$(arg lidar_frame)</frame_name>
       </plugin>
     </sensor>
   </gazebo>
@@ -152,9 +170,9 @@
       </imu>
       <plugin name="imu_plugin" filename="libgazebo_ros_imu_sensor.so">
         <ros>
-          <remapping>~/out:=ros_robot_controller/imu_raw</remapping>
+          <remapping>~/out:=$(arg imu_raw_topic)</remapping>
         </ros>
-        <frame_name>imu_link</frame_name>
+        <frame_name>$(arg imu_frame)</frame_name>
         <initial_orientation_as_reference>false</initial_orientation_as_reference>
       </plugin>
     </sensor>
@@ -195,10 +213,10 @@
                /camera/color/image_raw and /camera/color/camera_info, which is
                what camera_wiring.yaml expects. -->
           <ros>
-            <namespace>/camera</namespace>
+            <namespace>$(arg camera_namespace)</namespace>
           </ros>
-          <camera_name>color</camera_name>
-          <frame_name>depth_cam</frame_name>
+          <camera_name>$(arg camera_name)</camera_name>
+          <frame_name>$(arg camera_frame)</frame_name>
         </plugin>
       </sensor>
     </gazebo>

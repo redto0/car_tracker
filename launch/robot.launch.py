@@ -70,6 +70,8 @@ def generate_launch_description():
         condition=IfCondition(use_lidar),
     )
 
+    imu = _subsystem('sensors', 'imu.launch.py', common)
+
     camera = _subsystem(
         'sensors', 'camera.launch.py',
         common,
@@ -171,6 +173,7 @@ def generate_launch_description():
         description,
         base,
         lidar,
+        imu,
         camera,
         laser_odom,
         ekf,

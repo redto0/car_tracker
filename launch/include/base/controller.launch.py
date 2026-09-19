@@ -72,6 +72,9 @@ def generate_launch_description():
             'use_description': 'false',
             # rf2o owns /odom_raw. The node still drives the motors.
             'pub_odom_topic': 'false',
+            # sensors/imu.launch.py runs the IMU chain; bundling it with the
+            # motor driver meant simulation could not have one without the other.
+            'use_imu_filter': 'false',
         }.items(),
     )
 
